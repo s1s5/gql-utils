@@ -1,10 +1,17 @@
 import * as React from 'react'
 import _cloneDeep from 'lodash/cloneDeep'
 
-import {IEnvironment, PayloadError, GraphQLTaggedNode, UploadableMap, DeclarativeMutationConfig, MutationParameters, SelectorStoreUpdater} from 'relay-runtime'
+import {
+    PayloadError,
+    GraphQLTaggedNode,
+    UploadableMap,
+    DeclarativeMutationConfig,
+    MutationParameters,
+    SelectorStoreUpdater
+} from 'relay-runtime'
+
 import {ReactRelayContext, commitMutation} from 'react-relay'
 
-import {withEnvironment} from '../environment'
 import FormContext from './form-context'
 
 
@@ -13,7 +20,6 @@ type Props<TOperation extends MutationParameters> = {
     initialVariables: TOperation['variables'],
     mutation: GraphQLTaggedNode,
     children: React.ReactNode,
-    environment: IEnvironment,
     configs?: DeclarativeMutationConfig[],
     updater?: SelectorStoreUpdater<TOperation['response']> | null;
 }
@@ -109,28 +115,12 @@ const Form = <TOperation extends MutationParameters>(props: Props<TOperation>) =
     const [form_errors, set_form_errors] = React.useState<any[]>([])
     const [errors, set_errors] = React.useState<any>([])
     const [uploadables, set_uploadables] = React.useState<any>({})
-
-//    const set_errors = (errors_: ReadonlyArray<{
-//        readonly field: string;
-//        readonly messages: ReadonlyArray<string>;
-//    } | null> | null) => {
-//        const d: any = {}
-//        if (errors_) {
-//            errors_.map((e: any) => {
-//                const {field, messages} = e
-//                if (d[field] === undefined) {
-//                    d[field] = ''
-//                }
-//                d[field] = messages.reduce((a : string, c : string) => (a + c), d[field])
-//            })
-//        }
-//        set_errors_(d)
-//    }
+    const environment = React.useContext(ReactRelayContext)!.environment
 
     const commit_with_value = React.useCallback((value_, uploadables_) => {
         return new Promise((resolve, reject) => {
             const u: UploadableMap = {}
-            console.log('uploadables_ => ', uploadables_)
+            // console.log('uploadables_ => ', uploadables_)
             Object.entries(uploadables_).map((e) => {
                 const [key, value]: [string, any] = e
                 if (value.constructor === Array) {
@@ -141,16 +131,16 @@ const Form = <TOperation extends MutationParameters>(props: Props<TOperation>) =
                     u[key] = value
                 }
             })
-            console.log('u = ', u)
-            console.log(value_)
+            // console.log('u = ', u)
+            // console.log(value_)
             const tmp = _cloneDeep(value_)
             Object.keys(value_).map((key) => {
                 tmp[key].formPrefix = key.substr(0, key.length - 5)
             })
-            console.log("value_ => ", value_)
-            console.log("tmp => ", tmp)
+            // console.log("value_ => ", value_)
+            // console.log("tmp => ", tmp)
             commitMutation(
-                props.environment,
+                environment,
                 {
                     mutation: props.mutation,
                     variables: tmp,
@@ -189,8 +179,9 @@ const Form = <TOperation extends MutationParameters>(props: Props<TOperation>) =
                     updater: props.updater,
                     configs: props.configs,
                 }
-            )})
-    }, [props.environment, props.mutation])
+            )
+        })
+    }, [environment, props.mutation])
 
     const commit = React.useCallback(
         () => commit_with_value(value, uploadables),
@@ -198,27 +189,17 @@ const Form = <TOperation extends MutationParameters>(props: Props<TOperation>) =
     
     return (
         <FormContext.Provider value={ {
-            formBaseId: props.id,
-            value: value,
-            setValue: set_value,
-            setUploadables: set_uploadables,
-            formErrors: form_errors,
-            errors: errors,
-            commit,
+                formBaseId: props.id,
+                value: value,
+                setValue: set_value,
+                setUploadables: set_uploadables,
+                formErrors: form_errors,
+                errors: errors,
+                commit,
         } }>
-        { props.children }
+          { props.children }
         </FormContext.Provider>
     )
 }
-// export default withEnvironment(Form)
 
-
-const FormWithEnv = <TOperation extends MutationParameters>(props: Omit<Props<TOperation>, 'environment'>) => (
-    <ReactRelayContext.Consumer>
-      {(context) =>
-          <Form<TOperation> environment={ context!.environment } {...props} />
-      }
-    </ReactRelayContext.Consumer>
-)
-
-export default FormWithEnv
+export default Form
