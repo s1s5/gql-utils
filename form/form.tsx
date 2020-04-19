@@ -1,4 +1,5 @@
 import * as React from 'react'
+import _cloneDeep from 'lodash/cloneDeep'
 
 import {IEnvironment, PayloadError, GraphQLTaggedNode, UploadableMap, DeclarativeMutationConfig, MutationParameters, SelectorStoreUpdater} from 'relay-runtime'
 import {ReactRelayContext, commitMutation} from 'react-relay'
@@ -138,12 +139,20 @@ const Form = <TOperation extends MutationParameters>(props: Props<TOperation>) =
         })
         console.log('u = ', u)
         console.log(value_)
+        const tmp = _cloneDeep(value_)
+        Object.keys(value_).map((key) => {
+            tmp[key].formPrefix = key.substr(0, key.length - 5)
+        })
+        console.log("value_ => ", value_)
+        console.log("tmp => ", tmp)
         commitMutation(
             props.environment,
             {
                 mutation: props.mutation,
-                variables: value_,
+                variables: tmp,
                 onCompleted: (response: TOperation['response'] | null, errors: ReadonlyArray<PayloadError> | null | undefined) => {
+                    console.log(response)
+                    console.log(errors)
                     if (response === null) {
                         return 
                     }
