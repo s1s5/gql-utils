@@ -4,6 +4,7 @@ import Form from './form'
 import Props from './form-props'
 import withFormContext from './with-form-context'
 import CommitTrigger from './commit-trigger'
+import FormSubmit from './submit'
 
 type FormProps<T> = Props<T>
 
@@ -14,4 +15,5 @@ export {
     withFormContext,
     FormProps,
     CommitTrigger,
+    FormSubmit,
 }

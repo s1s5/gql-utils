@@ -8,7 +8,7 @@ type ContextType = {
     setUploadables: any,
     formErrors: any,
     errors: any,
-    commit: (on_success?: (response: any) => unknown, on_failure?: (response: any) => unknown) => void,
+    commit: () => Promise<any>,
 }
 
 export default React.createContext<ContextType | null>(null)

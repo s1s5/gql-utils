@@ -99,6 +99,9 @@ type Props<TOperation extends MutationParameters> = {
 //          endCursor
 //      }
 
+const format_error_messages = (errors:any) => {
+    return errors.map((e:any) => e.message)
+}
 
 
 const Form = <TOperation extends MutationParameters>(props: Props<TOperation>) => {
@@ -124,89 +127,73 @@ const Form = <TOperation extends MutationParameters>(props: Props<TOperation>) =
 //        set_errors_(d)
 //    }
 
-    const commit_with_value = React.useCallback((value_, uploadables_, on_success, on_failure) => {
-        const u: UploadableMap = {}
-        console.log('uploadables_ => ', uploadables_)
-        Object.entries(uploadables_).map((e) => {
-            const [key, value]: [string, any] = e
-            if (value.constructor === Array) {
-                value.map((v: File | Blob, i: number) => {
-                    u[`${key}[${i}]`] = v
-                })
-            } else {
-                u[key] = value
-            }
-        })
-        console.log('u = ', u)
-        console.log(value_)
-        const tmp = _cloneDeep(value_)
-        Object.keys(value_).map((key) => {
-            tmp[key].formPrefix = key.substr(0, key.length - 5)
-        })
-        console.log("value_ => ", value_)
-        console.log("tmp => ", tmp)
-        commitMutation(
-            props.environment,
-            {
-                mutation: props.mutation,
-                variables: tmp,
-                onCompleted: (response: TOperation['response'] | null, errors: ReadonlyArray<PayloadError> | null | undefined) => {
-                    console.log(response)
-                    console.log(errors)
-                    if (response === null) {
-                        return 
-                    }
-                    if (errors) {
-                        set_form_errors(errors.map((e) => e.message))
-                        return
-                    }
-
-                    let has_error = false
-                    for (let form in response) {
-                        const _f: any = response[form]
-                        if ((!(_f.errors == null)) && _f.errors.length > 0) {
-                            has_error = true
+    const commit_with_value = React.useCallback((value_, uploadables_) => {
+        return new Promise((resolve, reject) => {
+            const u: UploadableMap = {}
+            console.log('uploadables_ => ', uploadables_)
+            Object.entries(uploadables_).map((e) => {
+                const [key, value]: [string, any] = e
+                if (value.constructor === Array) {
+                    value.map((v: File | Blob, i: number) => {
+                        u[`${key}[${i}]`] = v
+                    })
+                } else {
+                    u[key] = value
+                }
+            })
+            console.log('u = ', u)
+            console.log(value_)
+            const tmp = _cloneDeep(value_)
+            Object.keys(value_).map((key) => {
+                tmp[key].formPrefix = key.substr(0, key.length - 5)
+            })
+            console.log("value_ => ", value_)
+            console.log("tmp => ", tmp)
+            commitMutation(
+                props.environment,
+                {
+                    mutation: props.mutation,
+                    variables: tmp,
+                    onCompleted: (response: TOperation['response'] | null, errors: ReadonlyArray<PayloadError> | null | undefined) => {
+                        if (response === null) {
+                            reject(["internal error"])
+                            return 
                         }
-                    }
-                    if (has_error) {
-                        set_errors(response)
-                        on_failure && on_failure(response)
-                    } else {
-                        set_errors([])
-                        on_success && on_success(response)
-                    }
+                        if (errors) {
+                            const error_messages = format_error_messages(errors)
+                            set_form_errors(error_messages)
+                            reject(error_messages)
+                            return
+                        }
 
-//                    const todo_update_form = response.todoUpdateForm
-//                    if (errors) {
-//                        set_form_errors(errors.map((e) => e.message))
-//                        console.log('errors = ', errors.map((e) => e.message))
-//                    } else if (todo_update_form.todo == null) {
-//                        console.log('errors = ', todo_update_form.errors)
-//                        if (todo_update_form.errors == null) {
-//                            set_form_errors([{'messages': 'サーバー内エラーが発生しました'}])
-//                        } else {
-//                            set_errors(todo_update_form.errors)
-//                        }
-//                    } else {
-//                        console.log('update completed!!!')
-//                    }
-                    // console.log('repsonse = ', response)
-                },
-                onError: (error: any) => {
-                    set_form_errors(error.errors.map((e: any) => e.message))
-                    // console.log('errors = ', error.errors.map((e:any) => e.message))
-                    // console.log('update error!!!')
-                    // console.log('error = ', error)
-                },
-                uploadables: u,
-                updater: props.updater,
-                configs: props.configs,
-            }
-        )
+                        let has_error = false
+                        for (let form in response) {
+                            const _f: any = response[form]
+                            if ((!(_f.errors == null)) && _f.errors.length > 0) {
+                                has_error = true
+                            }
+                        }
+                        if (has_error) {
+                            set_errors(response)
+                            reject(['form validation error'])
+                        } else {
+                            resolve(response)
+                        }
+                    },
+                    onError: (error: any) => {
+                        const error_messages = format_error_messages(error.errors)
+                        set_form_errors(error_messages)
+                        reject(error_messages)
+                    },
+                    uploadables: u,
+                    updater: props.updater,
+                    configs: props.configs,
+                }
+            )})
     }, [props.environment, props.mutation])
 
     const commit = React.useCallback(
-        (on_success?, on_failure?) => commit_with_value(value, uploadables, on_success, on_failure),
+        () => commit_with_value(value, uploadables),
         [value, uploadables, commit_with_value])
     
     return (
