@@ -12,7 +12,7 @@ type CWProps<P, T> = {
     name: string,
     Component: React.ComponentType<P>,
     context: any,
-    onChange?: (event: any, prev: T) => unknown,
+    onChange?: (event: any, prev: T) => T,
 } & Omit<P, keyof Props<T>>
 
 const ContextWrapper = <P, T>(props: CWProps<P, T>) => {
@@ -84,7 +84,7 @@ const ContextWrapper = <P, T>(props: CWProps<P, T>) => {
 
 
 const withFormContext = <P, T>(
-  Component: React.ComponentType<P>, on_change: (((event:any, prev:any) => any) | undefined) = undefined) => (
+  Component: React.ComponentType<P>, on_change?: (event:any, prev:T) => T) => (
       (props: Omit<P, keyof Props<T>> & { name: string }) => {
           return <FormContext.Consumer>
             { (context) => {

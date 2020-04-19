@@ -3,7 +3,7 @@ import * as React from 'react'
 import FormContext from './form-context'
 
 type Props = {
-    children: (submit: () => Promise<void>) => JSX.Element
+    children: (submit: () => Promise<any>) => JSX.Element
 }
 
 const Submit = (props: Props) => {
