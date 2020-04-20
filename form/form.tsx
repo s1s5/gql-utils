@@ -22,6 +22,8 @@ type Props<TOperation extends MutationParameters> = {
     children: React.ReactNode,
     configs?: DeclarativeMutationConfig[],
     updater?: SelectorStoreUpdater<TOperation['response']> | null;
+    loadFromStorage?: boolean,
+    saveToStorage?: boolean,
 }
 
 // !!! mutationは以下のような感じで
@@ -117,6 +119,44 @@ const Form = <TOperation extends MutationParameters>(props: Props<TOperation>) =
     const [uploadables, set_uploadables] = React.useState<any>({})
     const environment = React.useContext(ReactRelayContext)!.environment
 
+    const stored_key = `form-stored-${props.id}`
+    React.useLayoutEffect(() => {
+        if (props.loadFromStorage == null || props.loadFromStorage == false) {
+            return
+        }
+        try {
+            const store = sessionStorage
+            const data_json = store.getItem(stored_key)
+            if (data_json) {
+                const data = JSON.parse(data_json)
+                const restored:any = _cloneDeep(value)
+                Object.keys(restored).map((key) => {
+                    if (key in data) {
+                        Object.keys(restored[key]).map((sub_key) => {
+                            if (sub_key in data[key]) {
+                                restored[key][sub_key] = data[key][sub_key]
+                            }
+                        })
+                    }
+                })
+                set_value(restored)
+                store.removeItem(stored_key)
+            }
+        } catch {
+        }
+    }, [props.id, set_value])
+
+    React.useEffect(() => {
+        return () => {
+            if (props.saveToStorage) {
+                try {
+                    sessionStorage.setItem(stored_key, JSON.stringify(value))
+                } catch {
+                }
+            }
+        }
+    }, [value])
+
     const commit_with_value = React.useCallback((value_, uploadables_) => {
         return new Promise((resolve, reject) => {
             const u: UploadableMap = {}
@@ -167,6 +207,7 @@ const Form = <TOperation extends MutationParameters>(props: Props<TOperation>) =
                             set_errors(response)
                             reject(['form validation error'])
                         } else {
+                            sessionStorage.removeItem(stored_key)
                             resolve(response)
                         }
                     },
