@@ -22,7 +22,6 @@ type Props<TOperation extends MutationParameters> = {
     children: React.ReactNode,
     configs?: DeclarativeMutationConfig[],
     updater?: SelectorStoreUpdater<TOperation['response']> | null;
-    loadFromStorage?: boolean,
     saveToStorage?: boolean,
 }
 
@@ -121,7 +120,7 @@ const Form = <TOperation extends MutationParameters>(props: Props<TOperation>) =
 
     const stored_key = `form-stored-${props.id}`
     React.useLayoutEffect(() => {
-        if (props.loadFromStorage == null || props.loadFromStorage == false) {
+        if (props.saveToStorage == null || props.saveToStorage == false) {
             return
         }
         try {

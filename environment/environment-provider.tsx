@@ -9,8 +9,6 @@ import {
     Variables,
     UploadableMap,
     CacheConfig,
-
-    Observer,
 } from 'relay-runtime'
 
 import {ReactRelayContext} from 'react-relay'

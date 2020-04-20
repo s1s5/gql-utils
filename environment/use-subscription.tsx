@@ -4,7 +4,6 @@ import {
     GraphQLTaggedNode,
     Subscription,
     Observer,
-    Variables,
     SelectorStoreUpdater,
     GraphQLSubscriptionConfig,
     requestSubscription
@@ -25,21 +24,6 @@ type Param<TSubscriptionPayload extends SubscriptionParameters> = {
     variables?: TSubscriptionPayload["variables"],
     environment: IEnvironment,
 }
-
-//// 使い方
-//// useMemoにしておかないと、レンダリングのたびにgraphq``とか, variables: {}が新しいオブジェクトになる
-//  const config = React.useMemo(() => ({
-//      subscription: graphql`
-//          subscription countSeconds_Subscription {
-//              countSeconds(upTo: 5)
-//          }
-//      `,
-//      variables: {},
-//      observer: observer,
-//      environment: props.environment,
-//  }), [observer, props.environment])
-//
-//  const value = useSubscription(config)
 
 const useSubscription = <TSubscriptionPayload extends SubscriptionParameters>(param: Param<TSubscriptionPayload>, deps: any[]) => {    
     let [value, set_value] = React.useState<TSubscriptionPayload["response"]>()
