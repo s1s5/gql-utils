@@ -17,9 +17,10 @@ import fetchQuery from './fetch-query'
 import { SubscriptionClient } from 'subscriptions-transport-ws'
 
 type Props = {
-    post_url: string,
-    ws_url?: string,
+    postUrl: string,
+    wsUrl?: string,
     children: React.ReactNode,
+    requestInit?: Omit<RequestInit, "body">,
 }
 
 let _global_counter = 0
@@ -39,11 +40,11 @@ const EnvironmentProvider = (props: Props) => {
             variables: Variables,
             cacheConfig: CacheConfig,
             uploadables?: UploadableMap | null) => fetchQuery(
-                props.post_url, request, variables, cacheConfig, uploadables)
+                props.postUrl, request, variables, cacheConfig, uploadables, props.requestInit)
 
         let network
-        if (props.ws_url) {
-            const c = new SubscriptionClient(props.ws_url!, {
+        if (props.wsUrl) {
+            const c = new SubscriptionClient(props.wsUrl!, {
                 lazy: true,  // これがないとhot-reloadで二重で接続されたりする？
                 reconnect: true,
             })
@@ -84,7 +85,7 @@ const EnvironmentProvider = (props: Props) => {
             // console.log("client close", client === undefined)
             client && client.close()
         }
-    }, [props.post_url, props.ws_url])
+    }, [props.postUrl, props.wsUrl])
     
     if (environment === undefined) {
         return <></>

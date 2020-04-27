@@ -90,19 +90,34 @@ export const getHeaders = (uploadables?: UploadableMap | null) : Record<string, 
 
 
 
-const fetchQuery = async (url: string, request: RequestParameters, variables: Variables, uploadables?: UploadableMap | null) => {
+const fetchQuery = async (url: string, request: RequestParameters, variables: Variables, uploadables?: UploadableMap | null, requestInit?: Omit<RequestInit, "body">) => {
     try {
+        let _method: string = 'POST'
+        let _headers: HeadersInit = {}
+        let _other_options: Omit<RequestInit, "method" | "body" | "headers"> = {}
+        if (!(requestInit == null)) {
+            const {method, headers, ...other_options} = requestInit
+            if (!(method == null)) {
+                _method = method
+            }
+            if (!(headers == null)) {
+                _headers = headers
+            }
+            _other_options = other_options
+        }
         const body = getRequestBody(request, variables, uploadables);
         const headers = {
+            ..._headers,
             ...getHeaders(uploadables),
         };
 
         const response = await fetchWithRetries(url, {
-            method: 'POST',
+            method: _method,
             headers,
             body,
             fetchTimeout: 20000,
             retryDelays: [1000, 3000, 5000],
+            ..._other_options
         });
 
         const data = await handleData(response);
@@ -144,12 +159,13 @@ const cacheHandler = async (
     variables: Variables,
     cacheConfig: CacheConfig,
     uploadables?: UploadableMap | null,
+    requestInit?: Omit<RequestInit, "body">,
 ) => {
     const queryID = request.text!;
     
     if (isMutation(request)) {
         queryResponseCache.clear();
-        return fetchQuery(url, request, variables, uploadables);
+        return fetchQuery(url, request, variables, uploadables, requestInit);
     }
     
     const fromCache = queryResponseCache.get(queryID, variables);
@@ -157,7 +173,7 @@ const cacheHandler = async (
         return fromCache;
     }
     
-    const fromServer = await fetchQuery(url, request, variables, uploadables);
+    const fromServer = await fetchQuery(url, request, variables, uploadables, requestInit);
     if (fromServer) {
         queryResponseCache.set(queryID, variables, fromServer);
     }
