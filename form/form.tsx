@@ -112,7 +112,7 @@ const format_error_messages = (errors:any) => {
 
 
 const Form = <TOperation extends MutationParameters>(props: Props<TOperation>) => {
-    const [value, set_value] = React.useState(props.initialVariables)
+    const [variables, set_variables] = React.useState(props.initialVariables)
     const [form_errors, set_form_errors] = React.useState<any[]>([])
     const [errors, set_errors] = React.useState<any>([])
     const [uploadables, set_uploadables] = React.useState<any>({})
@@ -128,7 +128,7 @@ const Form = <TOperation extends MutationParameters>(props: Props<TOperation>) =
             const data_json = store.getItem(stored_key)
             if (data_json) {
                 const data = JSON.parse(data_json)
-                const restored:any = _cloneDeep(value)
+                const restored:any = _cloneDeep(variables)
                 Object.keys(restored).map((key) => {
                     if (key in data) {
                         Object.keys(restored[key]).map((sub_key) => {
@@ -138,23 +138,23 @@ const Form = <TOperation extends MutationParameters>(props: Props<TOperation>) =
                         })
                     }
                 })
-                set_value(restored)
+                set_variables(restored)
                 store.removeItem(stored_key)
             }
         } catch {
         }
-    }, [props.id, set_value])
+    }, [props.id, set_variables])
 
     React.useEffect(() => {
         return () => {
             if (props.saveToStorage) {
                 try {
-                    sessionStorage.setItem(stored_key, JSON.stringify(value))
+                    sessionStorage.setItem(stored_key, JSON.stringify(variables))
                 } catch {
                 }
             }
         }
-    }, [value])
+    }, [variables])
 
     const commit_with_value = React.useCallback((value_, uploadables_) => {
         return new Promise((resolve, reject) => {
@@ -224,14 +224,15 @@ const Form = <TOperation extends MutationParameters>(props: Props<TOperation>) =
     }, [environment, props.mutation])
 
     const commit = React.useCallback(
-        () => commit_with_value(value, uploadables),
-        [value, uploadables, commit_with_value])
+        () => commit_with_value(variables, uploadables),
+        [variables, uploadables, commit_with_value])
     
     return (
         <FormContext.Provider value={ {
                 formBaseId: props.id,
-                value: value,
-                setValue: set_value,
+                initialVariables: props.initialVariables,
+                variables: variables,
+                setVariables: set_variables,
                 setUploadables: set_uploadables,
                 formErrors: form_errors,
                 errors: errors,

@@ -22,7 +22,7 @@ const ContextWrapper = <P, T>(props: CWProps<P, T>) => {
         ...other_props} = props
     const key = `${context.formGroupId!}Input`
     const _on_change = React.useCallback((new_value: T) => {
-        context.setValue( (prev:any) => {
+        context.setVariables( (prev:any) => {
             const next = _cloneDeep(prev)
             // next[props.name] = !prev[props.name]
             // nameのチェックを入れたい, Component作成時に初期値が必ずundefinedじゃないことを保証すればいい？
@@ -35,7 +35,7 @@ const ContextWrapper = <P, T>(props: CWProps<P, T>) => {
              * console.log(next) */
             return next
         })
-    }, [context.setValue, context.formGroupId, props.name])
+    }, [context.setVariables, context.formGroupId, props.name])
 
     const _on_upload = React.useCallback((event: any) => {
         // (e) => e.target.files &&  (e.target.files.item(0)!)
@@ -93,7 +93,7 @@ const withFormContext = <P, T>(
                     Component={Component}
                     context={context!}
                     formId={ `${context!.formBaseId}-${context!.formGroupId!}-${props.name}` }
-                    value={ context!.value[`${context!.formGroupId!}Input`][props.name] }
+                    value={ context!.variables[`${context!.formGroupId!}Input`][props.name] }
                     onChange={ on_change }
                     { ...props } />
             }}

@@ -3,8 +3,9 @@ import * as React from 'react'
 type ContextType = {
     formBaseId: string,
     formGroupId?: string,
-    value: any,
-    setValue: any,
+    initialVariables: any,
+    variables: any,
+    setVariables: any,
     setUploadables: any,
     formErrors: any,
     errors: any,
