@@ -23,6 +23,7 @@ type Props<TOperation extends MutationParameters> = {
     configs?: DeclarativeMutationConfig[],
     updater?: SelectorStoreUpdater<TOperation['response']> | null;
     saveToStorage?: boolean,
+    onChange?: (value: TOperation['variables']) => void,
 }
 
 // !!! mutationは以下のような感じで
@@ -226,7 +227,11 @@ const Form = <TOperation extends MutationParameters>(props: Props<TOperation>) =
     const commit = React.useCallback(
         () => commit_with_value(variables, uploadables),
         [variables, uploadables, commit_with_value])
-    
+
+    React.useEffect(() => {
+        props.onChange && props.onChange(variables)
+    }, [variables]);
+
     return (
         <FormContext.Provider value={ {
                 formBaseId: props.id,
