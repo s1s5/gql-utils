@@ -34,6 +34,7 @@ function fetchWithRetries(uri: string, initWithRetries?: InitWithRetries | null)
             requestsAttempted++;
             requestStartTime = Date.now();
             let isRequestAlive = true;
+            // console.log(uri, init)
             const request = fetch(uri, init);
             const requestTimeout = setTimeout(() => {
                 isRequestAlive = false;

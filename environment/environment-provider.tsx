@@ -20,7 +20,7 @@ type Props = {
     postUrl: string,
     wsUrl?: string,
     children: React.ReactNode,
-    requestInit?: Omit<RequestInit, "body">,
+    getRequestInit?: () => Omit<RequestInit, "body">,
 }
 
 let _global_counter = 0
@@ -40,7 +40,7 @@ const EnvironmentProvider = (props: Props) => {
             variables: Variables,
             cacheConfig: CacheConfig,
             uploadables?: UploadableMap | null) => fetchQuery(
-                props.postUrl, request, variables, cacheConfig, uploadables, props.requestInit)
+                props.postUrl, request, variables, cacheConfig, uploadables, props.getRequestInit)
 
         let network
         if (props.wsUrl) {
@@ -85,7 +85,7 @@ const EnvironmentProvider = (props: Props) => {
             // console.log("client close", client === undefined)
             client && client.close()
         }
-    }, [props.postUrl, props.wsUrl])
+    }, [props.postUrl, props.wsUrl, props.getRequestInit])
     
     if (environment === undefined) {
         return <></>

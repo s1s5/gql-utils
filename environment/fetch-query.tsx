@@ -90,13 +90,13 @@ export const getHeaders = (uploadables?: UploadableMap | null) : Record<string, 
 
 
 
-const fetchQuery = async (url: string, request: RequestParameters, variables: Variables, uploadables?: UploadableMap | null, requestInit?: Omit<RequestInit, "body">) => {
+const fetchQuery = async (url: string, request: RequestParameters, variables: Variables, uploadables?: UploadableMap | null, getRequestInit?: () => Omit<RequestInit, "body">) => {
     try {
         let _method: string = 'POST'
         let _headers: HeadersInit = {}
         let _other_options: Omit<RequestInit, "method" | "body" | "headers"> = {}
-        if (!(requestInit == null)) {
-            const {method, headers, ...other_options} = requestInit
+        if (!(getRequestInit == null)) {
+            const {method, headers, ...other_options} = getRequestInit()
             if (!(method == null)) {
                 _method = method
             }
@@ -137,12 +137,14 @@ const fetchQuery = async (url: string, request: RequestParameters, variables: Va
         return data;
     } catch (err) {
         // eslint-disable-next-line
-        console.log('err: ', err);
+        console.error('err: ', err);
+        if (err == null) {
+            throw new Error('Unavailable service. Try again later.');
+        }
 
         const timeoutRegexp = new RegExp(/Still no successful response after/);
         const serverUnavailableRegexp = new RegExp(/Failed to fetch/);
         if (timeoutRegexp.test(err.message) || serverUnavailableRegexp.test(err.message)) {
-
             throw new Error('Unavailable service. Try again later.');
         }
 
@@ -159,13 +161,13 @@ const cacheHandler = async (
     variables: Variables,
     cacheConfig: CacheConfig,
     uploadables?: UploadableMap | null,
-    requestInit?: Omit<RequestInit, "body">,
+    getRequestInit?: () => Omit<RequestInit, "body">,
 ) => {
     const queryID = request.text!;
     
     if (isMutation(request)) {
         queryResponseCache.clear();
-        return fetchQuery(url, request, variables, uploadables, requestInit);
+        return fetchQuery(url, request, variables, uploadables, getRequestInit);
     }
     
     const fromCache = queryResponseCache.get(queryID, variables);
@@ -173,7 +175,7 @@ const cacheHandler = async (
         return fromCache;
     }
     
-    const fromServer = await fetchQuery(url, request, variables, uploadables, requestInit);
+    const fromServer = await fetchQuery(url, request, variables, uploadables, getRequestInit);
     if (fromServer) {
         queryResponseCache.set(queryID, variables, fromServer);
     }
