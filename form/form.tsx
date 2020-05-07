@@ -1,5 +1,9 @@
 import * as React from 'react'
+
 import _cloneDeep from 'lodash/cloneDeep'
+import _isEqual from 'lodash/isEqual'
+
+import is_callable from 'is-callable'
 
 import {
     PayloadError,
@@ -12,14 +16,14 @@ import {
 
 import {ReactRelayContext, commitMutation} from 'react-relay'
 
-import FormContext from './form-context'
+import FormContext, {ContextType} from './form-context'
 
 
 type Props<TOperation extends MutationParameters> = {
     id: string,
     initialVariables: TOperation['variables'],
     mutation: GraphQLTaggedNode,
-    children: React.ReactNode,
+    children: React.ReactNode | ((context: ContextType) => React.ReactNode),
     configs?: DeclarativeMutationConfig[],
     updater?: SelectorStoreUpdater<TOperation['response']> | null;
     saveToStorage?: boolean,
@@ -113,8 +117,11 @@ const format_error_messages = (errors:any) => {
 
 
 const Form = <TOperation extends MutationParameters>(props: Props<TOperation>) => {
+    const [initial_variables, set_initial_variables] = React.useState(props.initialVariables)
     const [variables, set_variables] = React.useState(props.initialVariables)
-    const [form_errors, set_form_errors] = React.useState<any[]>([])
+    const [has_difference, set_has_difference] = React.useState(false)
+    const [committing, set_committing] = React.useState(false)
+    const [form_errors, set_form_errors] = React.useState<string[]>([])
     const [errors, set_errors] = React.useState<any>([])
     const [uploadables, set_uploadables] = React.useState<any>({})
     const environment = React.useContext(ReactRelayContext)!.environment
@@ -158,7 +165,9 @@ const Form = <TOperation extends MutationParameters>(props: Props<TOperation>) =
     }, [variables])
 
     const commit_with_value = React.useCallback((value_, uploadables_) => {
-        return new Promise((resolve, reject) => {
+        const p = new Promise((resolve, reject) => {
+            set_committing(true)
+
             const u: UploadableMap = {}
             // console.log('uploadables_ => ', uploadables_)
             Object.entries(uploadables_).map((e) => {
@@ -222,6 +231,15 @@ const Form = <TOperation extends MutationParameters>(props: Props<TOperation>) =
                 }
             )
         })
+
+        p.then(() => {
+            set_initial_variables(value_)
+            set_has_difference(false)
+        })
+        p.finally(() =>{
+            set_committing(false)
+        })
+        return p
     }, [environment, props.mutation])
 
     const commit = React.useCallback(
@@ -229,21 +247,28 @@ const Form = <TOperation extends MutationParameters>(props: Props<TOperation>) =
         [variables, uploadables, commit_with_value])
 
     React.useEffect(() => {
+        set_has_difference(!_isEqual(variables, initial_variables))
         props.onChange && props.onChange(variables)
     }, [variables]);
 
+    const context: ContextType = {
+        formBaseId: props.id,
+        initialVariables: props.initialVariables,
+        variables: variables,
+        setVariables: set_variables,
+        setUploadables: set_uploadables,
+        formErrors: form_errors,
+        errors: errors,
+        commit,
+        hasDifference: has_difference,
+        committing: committing,
+    }
+
     return (
-        <FormContext.Provider value={ {
-                formBaseId: props.id,
-                initialVariables: props.initialVariables,
-                variables: variables,
-                setVariables: set_variables,
-                setUploadables: set_uploadables,
-                formErrors: form_errors,
-                errors: errors,
-                commit,
-        } }>
-          { props.children }
+        <FormContext.Provider value={ context }>
+          { is_callable(props.children) ?
+            props.children(context) :
+            props.children }
         </FormContext.Provider>
     )
 }

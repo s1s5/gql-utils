@@ -1,15 +1,17 @@
 import * as React from 'react'
 
-type ContextType = {
+export type ContextType = {
     formBaseId: string,
     formGroupId?: string,
     initialVariables: any,
     variables: any,
     setVariables: any,
     setUploadables: any,
-    formErrors: any,
+    formErrors: string [],
     errors: any,
     commit: () => Promise<any>,
+    hasDifference: boolean,
+    committing: boolean,
 }
 
 export default React.createContext<ContextType | null>(null)
