@@ -6,13 +6,14 @@ import {
     Observer,
     SelectorStoreUpdater,
     GraphQLSubscriptionConfig,
-    requestSubscription
+    requestSubscription,
+    OperationType,
 } from 'relay-runtime'
 
 import {getId, _globals} from './environment-provider'
 
 interface SubscriptionParameters {
-    readonly response: {};
+    readonly response: OperationType;
     readonly variables: {};
 }
 
@@ -47,7 +48,7 @@ const useSubscription = <TSubscriptionPayload extends SubscriptionParameters>(pa
 
         const current_counter = getId()
 
-        const subscription_config : GraphQLSubscriptionConfig<TSubscriptionPayload["response"]> = {
+        const subscription_config : GraphQLSubscriptionConfig<TSubscriptionPayload> = {
             subscription: param.subscription,
             variables: param.variables == null ? {} : param.variables,
             updater: param.updater,
