@@ -274,3 +274,4 @@ const Form = <TOperation extends MutationParameters>(props: Props<TOperation>) =
 }
 
 export default Form
+export {Props}
