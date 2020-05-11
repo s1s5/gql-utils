@@ -4,7 +4,7 @@ import _cloneDeep from 'lodash/cloneDeep'
 import _clone from 'lodash/clone'
 
 import FormContext from './form-context'
-import Props from './form-field-props'
+import {FormFieldProps} from './form-field-props'
 
 type CWProps<P, T> = {
     formId: string,
@@ -13,7 +13,7 @@ type CWProps<P, T> = {
     Component: React.ComponentType<P>,
     context: any,
     onChange?: (event: any, prev: T) => T,
-} & Omit<P, keyof Props<T>>
+} & Omit<P, keyof FormFieldProps<T>>
 
 const ContextWrapper = <P, T>(props: CWProps<P, T>) => {
     const {
@@ -85,7 +85,7 @@ const ContextWrapper = <P, T>(props: CWProps<P, T>) => {
 
 const withFormContext = <P, T>(
   Component: React.ComponentType<P>, on_change?: (event:any, prev:T) => T) => (
-      (props: Omit<P, keyof Props<T>> & { name: string }) => {
+      (props: Omit<P, keyof FormFieldProps<T>> & { name: string }) => {
           return <FormContext.Consumer>
             { (context) => {
                   // console.log('wrapper -> ', props.name, context.value[props.name])

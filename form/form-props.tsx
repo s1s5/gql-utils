@@ -19,4 +19,4 @@ type FormProps<TOperation extends MutationParameters> = {
     onChange?: (value: TOperation['variables']) => void,
 }
 
-export default FormProps
+export {FormProps}

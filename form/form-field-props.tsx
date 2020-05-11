@@ -1,4 +1,4 @@
-type Props<T> = {
+type FormFieldProps<T> = {
     formId: string,
     value: T,
     errors?: readonly string [],
@@ -6,4 +6,4 @@ type Props<T> = {
     onUpload: (event: any) => void,
 }
 
-export default Props
+export {FormFieldProps}

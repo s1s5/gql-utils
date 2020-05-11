@@ -17,7 +17,7 @@ import {
 import {ReactRelayContext, commitMutation} from 'react-relay'
 
 import FormContext, {ContextType} from './form-context'
-import FormProps from './form-props'
+import {FormProps} from './form-props'
 
 // export type FormProps<TOperation extends MutationParameters> = {
 //     id: string,
