@@ -4,7 +4,7 @@ import _cloneDeep from 'lodash/cloneDeep'
 import _clone from 'lodash/clone'
 
 import FormContext from './form-context'
-import Props from './form-props'
+import Props from './form-field-props'
 
 type CWProps<P, T> = {
     formId: string,

@@ -1,20 +1,19 @@
 import FormContext from './form-context'
 import FormGroup from './form-group'
-import Form, {Props as FormProps} from './form'
-import Props from './form-props'
+import Form from './form'
+import FormProps from './form-props'
+import FormFieldProps from './form-field-props'
 import withFormContext from './with-form-context'
 import CommitTrigger from './commit-trigger'
 import FormSubmit from './submit'
 
-type FormFieldProps<T> = Props<T>
-
 export {
     Form,
+    FormProps,
     FormContext,
     FormGroup,
     withFormContext,
     FormFieldProps,
     CommitTrigger,
     FormSubmit,
-    FormProps,
 }

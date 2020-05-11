@@ -17,18 +17,18 @@ import {
 import {ReactRelayContext, commitMutation} from 'react-relay'
 
 import FormContext, {ContextType} from './form-context'
+import FormProps from './form-props'
 
-
-type Props<TOperation extends MutationParameters> = {
-    id: string,
-    initialVariables: TOperation['variables'],
-    mutation: GraphQLTaggedNode,
-    children: React.ReactNode | ((context: ContextType) => React.ReactNode),
-    configs?: DeclarativeMutationConfig[],
-    updater?: SelectorStoreUpdater<TOperation['response']> | null;
-    saveToStorage?: boolean,
-    onChange?: (value: TOperation['variables']) => void,
-}
+// export type FormProps<TOperation extends MutationParameters> = {
+//     id: string,
+//     initialVariables: TOperation['variables'],
+//     mutation: GraphQLTaggedNode,
+//     children: React.ReactNode | ((context: ContextType) => React.ReactNode),
+//     configs?: DeclarativeMutationConfig[],
+//     updater?: SelectorStoreUpdater<TOperation['response']> | null;
+//     saveToStorage?: boolean,
+//     onChange?: (value: TOperation['variables']) => void,
+// }
 
 // !!! mutationは以下のような感じで
 // !!! inputはmutationの名前「todoUpdateForm」 + 「Input」である必要がある。
@@ -116,7 +116,7 @@ const format_error_messages = (errors:any) => {
 }
 
 
-const Form = <TOperation extends MutationParameters>(props: Props<TOperation>) => {
+const Form = <TOperation extends MutationParameters>(props: FormProps<TOperation>) => {
     const [initial_variables, set_initial_variables] = React.useState(props.initialVariables)
     const [variables, set_variables] = React.useState(props.initialVariables)
     const [has_difference, set_has_difference] = React.useState(false)
@@ -274,4 +274,3 @@ const Form = <TOperation extends MutationParameters>(props: Props<TOperation>) =
 }
 
 export default Form
-export {Props}
