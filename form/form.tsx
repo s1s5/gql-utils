@@ -151,7 +151,7 @@ const Form = <TOperation extends MutationParameters>(props: FormProps<TOperation
             }
         } catch {
         }
-    }, [props.id, set_variables])
+    }, [props.id])  // props.id, set_variables
 
     React.useEffect(() => {
         return () => {
