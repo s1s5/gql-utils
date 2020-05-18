@@ -20,16 +20,29 @@ const ContextWrapper = <P, T>(props: CWProps<P, T>) => {
         name, Component, context, onChange,
         formId, value,
         ...other_props} = props
-    const key = `${context.formGroupId!}Input`
+    let key: undefined | string = undefined
+    if (context.formGroupId == null) {
+        key = undefined
+    } else {
+        key = `${context.formGroupId!}Input`
+    }
     const _on_change = React.useCallback((new_value: T) => {
         context.setVariables( (prev:any) => {
             const next = _cloneDeep(prev)
             // next[props.name] = !prev[props.name]
             // nameのチェックを入れたい, Component作成時に初期値が必ずundefinedじゃないことを保証すればいい？
-            if (onChange === undefined) {
-                next[key][props.name] = new_value
+            if (key == null) {
+                if (onChange === undefined) {
+                    next[props.name] = new_value
+                } else {
+                    next[props.name] = onChange(new_value, prev[props.name])
+                }
             } else {
-                next[key][props.name] = onChange(new_value, prev[key][props.name])
+                if (onChange === undefined) {
+                    next[key][props.name] = new_value
+                } else {
+                    next[key][props.name] = onChange(new_value, prev[key][props.name])
+                }
             }
             /* console.log(prev)
              * console.log(next) */
@@ -52,7 +65,11 @@ const ContextWrapper = <P, T>(props: CWProps<P, T>) => {
         }
         context.setUploadables( (prev:any) => {
             const next = _clone(prev)
-            next[`${context.formGroupId!}-${props.name}`] = ll
+            if (context.formGroupId == null) {
+                next[`${props.name}`] = ll
+            } else {
+                next[`${context.formGroupId!}-${props.name}`] = ll
+            }
             return next
         })
     }, [context.setUploadables, context.formGroupId, props.name])
@@ -92,8 +109,14 @@ const withFormContext = <P, T>(
                   return <ContextWrapper<P, T>
                     Component={Component}
                     context={context!}
-                    formId={ `${context!.formBaseId}-${context!.formGroupId!}-${props.name}` }
-                    value={ context!.variables[`${context!.formGroupId!}Input`][props.name] }
+                    formId={ context!.formGroupId ?
+                            `${context!.formBaseId}-${context!.formGroupId!}-${props.name}` :
+                            `${context!.formBaseId}-${props.name}`
+                    }
+                    value={ context!.formGroupId ?
+                           context!.variables[`${context!.formGroupId!}Input`][props.name] :
+                           context!.variables[props.name]
+                    }
                     onChange={ on_change }
                     { ...props } />
             }}
