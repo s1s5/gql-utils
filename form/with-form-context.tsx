@@ -13,12 +13,14 @@ type CWProps<P, T> = {
     Component: React.ComponentType<P>,
     context: any,
     onChange?: (event: any, prev: T) => T,
+    valueToField?: (value: any) => T,
+    fieldToValue?: (prev_value: any, new_value: T) => any
 } & Omit<P, keyof FormFieldProps<T>>
 
 const ContextWrapper = <P, T>(props: CWProps<P, T>) => {
     const {
         name, Component, context, onChange,
-        formId, value,
+        formId, value, valueToField, fieldToValue,
         ...other_props} = props
     let key: undefined | string = undefined
     if (context.formGroupId == null) {
@@ -32,16 +34,18 @@ const ContextWrapper = <P, T>(props: CWProps<P, T>) => {
             // next[props.name] = !prev[props.name]
             // nameのチェックを入れたい, Component作成時に初期値が必ずundefinedじゃないことを保証すればいい？
             if (key == null) {
-                if (onChange === undefined) {
+                if (fieldToValue === undefined) {
                     next[props.name] = new_value
                 } else {
-                    next[props.name] = onChange(new_value, prev[props.name])
+                    // next[props.name] = onChange(new_value, prev[props.name])
+                    next[props.name] = fieldToValue(prev[props.name], new_value)
                 }
             } else {
-                if (onChange === undefined) {
+                if (fieldToValue === undefined) {
                     next[key][props.name] = new_value
                 } else {
-                    next[key][props.name] = onChange(new_value, prev[key][props.name])
+                    // next[key][props.name] = onChange(new_value, prev[key][props.name])
+                    next[key][props.name] = fieldToValue(prev[key][props.name], new_value)
                 }
             }
             /* console.log(prev)
@@ -89,10 +93,15 @@ const ContextWrapper = <P, T>(props: CWProps<P, T>) => {
         return e
     }, [context.errors])
 
+    let value_ = value
+    if (valueToField) {
+        value_ = valueToField(value)
+    }
+
     const Component_ = Component as any  // TODO: なんでかうまく行かない。。どういうタイプを指定すれば？
     return <Component_
                formId={ formId }
-               value={ value == null ? "" : value }
+               value={ value_ == null ? "" : value_ }
                onChange={ _on_change }
                onUpload={ _on_upload }
                errors={_errors}
@@ -102,7 +111,10 @@ const ContextWrapper = <P, T>(props: CWProps<P, T>) => {
 
 const withFormContext = <P, T>(
   Component: React.ComponentType<P>, on_change?: (event:any, prev:T) => T) => (
-      (props: Omit<P, keyof FormFieldProps<T>> & { name: string }) => {
+      (props: Omit<P, keyof FormFieldProps<T>> & {
+          name: string,
+          valueToField?: (value: any) => T,
+          fieldToValue?: (prev_value: any, new_value: T) => any }) => {
           return <FormContext.Consumer>
             { (context) => {
                   // console.log('wrapper -> ', props.name, context.value[props.name])
@@ -117,7 +129,9 @@ const withFormContext = <P, T>(
                            context!.variables[`${context!.formGroupId!}Input`][props.name] :
                            context!.variables[props.name]
                     }
-                    onChange={ on_change }
+                    onChange={ on_change}
+                    valueToField={ props.valueToField }
+                    fieldToValue={ props.fieldToValue }
                     { ...props } />
             }}
           </FormContext.Consumer>
