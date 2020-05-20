@@ -1,6 +1,8 @@
 import * as React from 'react'
 import _clone from 'lodash/clone'
 
+import {RendererProps} from './detail'
+
 import {
     IEnvironment,
     GraphQLTaggedNode,
@@ -21,55 +23,52 @@ type QRProps<TOperation extends OperationType> = {
     variables: TOperation['variables'],
     cacheConfig?: CacheConfig | null
     fetchPolicy?: FetchPolicy
-    onError: (error:Error) => (React.ReactNode | null)
-    onLoading: React.ReactNode
-}
+} & RendererProps
 
+type EdgesType<N> = ReadonlyArray<{
+    readonly cursor: string,
+    readonly node : {
+        readonly id: string,
+    } & N | null,
+} | null>
 
-type ListType<E, N> = {
+export type ListType<N> = {
     readonly pageInfo: {
-            readonly hasNextPage: boolean;
-            readonly hasPreviousPage: boolean;
-            readonly startCursor: string | null;
-            readonly endCursor: string | null;
-        }
-        readonly edges: ReadonlyArray<{
-            readonly cursor: string,
-            readonly node : {
-                readonly id: string,
-            } & N | null,
-        } | null> & E
+        readonly hasNextPage: boolean;
+        readonly hasPreviousPage: boolean;
+        readonly startCursor: string | null;
+        readonly endCursor: string | null;
+    }
+    readonly edges: EdgesType<N>
 }
 
-type FCProps<E, N> = {
-    batchSize?: number
-    excludeKeys?: string[]
-    children: (props: ContentProps<E, N>) => JSX.Element | React.ReactNode
-    onQueryCompleted?: (list: ListType<E, N> | null, relay: RelayRefetchProp) => void
-}
-
-type ContentProps<E, N> = {
+export type ContentProps = {
     hasPreviousPage?: boolean
     hasNextPage?: boolean
     getPreviousPage?: () => Promise<number>
     getNextPage?: () => Promise<void>
-    list: ListType<E, N>
+    rowCount: number
 }
 
-type ContainerProps<E, N> = {
-    readonly list: ListType<E, N>
+// type ListContentProps = ContentProps
+// export {ListContentProps}
+
+type FCProps<N> = {
+    batchSize?: number
+    excludeKeys?: string[]
+    children: (edges: ListType<N>, props: ContentProps) => any
+    onQueryCompleted?: (list: ListType<N> | null, relay: RelayRefetchProp) => void
+}
+
+export type ContainerProps<N> = {
+    readonly list: ListType<N>
     relay: RelayRefetchProp
 //     batchSize?: number
 //     excludeKeys?: string[]
 //     children: (props: ContentProps<E, N>) => JSX.Element
-} & Omit<FCProps<E, N>, "onQueryCompleted">
+} & Omit<FCProps<N>, "onQueryCompleted">
 
-export {ContainerProps, ContentProps}
-
-const RefetchContainer = <E extends any, N extends Object>(props: ContainerProps<E, N>) => {
-    if (props.list.edges == null) {
-        throw Error("edges is null")
-    }
+const RefetchContainer = <N extends Object>(props: ContainerProps<N>) => {
     const props_ = props
     // const edges = props_.list.edges!
     const batch_size = props_.batchSize ? props_.batchSize: 10
@@ -123,64 +122,63 @@ const RefetchContainer = <E extends any, N extends Object>(props: ContainerProps
         })
     )
     
-    return props.children({
+    return props.children(props.list, {
         hasPreviousPage: props_.list.pageInfo.hasPreviousPage,
         hasNextPage: props_.list.pageInfo.hasNextPage,
         getPreviousPage: get_previous_page,
         getNextPage: get_next_page,
-        list: props.list,
+        rowCount: props.list.edges.length,
     })
 }
 
 
-export function createListFC<TOperation extends OperationType, E, N>(query: GraphQLTaggedNode, cRC: any, key0: string, key1: string) {
-    type L = {
-        readonly pageInfo: {
-            readonly hasNextPage: boolean;
-            readonly hasPreviousPage: boolean;
-            readonly startCursor: string | null;
-            readonly endCursor: string | null;
-        }
-        readonly edges: ReadonlyArray<{
-            readonly cursor: string,
-            readonly node : {
-                readonly id: string,
-            } & N | null,
-        } | null> & E,
-        
-    }
+export function createListFC<TOperation extends OperationType, N>(
+    query: GraphQLTaggedNode, cRC: any, key0: string, key1: string, default_renderer_props?: RendererProps) {
+
     type P = {
         [key: string] : {
-            [key: string]: L | null,
+            [key: string]: ListType<N> | null,
         },
     } & {
         relay: RelayRefetchProp
     }
 
-    const List = (props: P & FCProps<E, N>) => {
-        const {onQueryCompleted, batchSize, excludeKeys, children} = props
-        const l = props[key0][key1]!// as L | null
-        console.log(props)
+    const List = (props: P & FCProps<N> & RendererProps) => {
+        const {onQueryCompleted, batchSize, excludeKeys, children, onError} = props
+        if (props[key0] == null || props[key0][key1] == null || props[key0][key1]!.edges == null) {
+            const e = Error("アクセス権限がないか、予期しないエラーです")
+            if (onError == null) {
+                throw e
+            }
+            return onError(e)
+        }
+
+        const list = props[key0][key1]! as ListType<N>
+        // console.log(props)
         React.useLayoutEffect(() => {
-            onQueryCompleted && onQueryCompleted(l, props.relay)
-        }, [l, props.relay])
-        console.log(children)
+            onQueryCompleted && onQueryCompleted(list, props.relay)
+        }, [list, props.relay])
+        // console.log(children)
+
         return (
             <RefetchContainer
-            list={l!}
-            relay={props.relay}
-            batchSize={batchSize}
-            excludeKeys={excludeKeys}>{(props) => (
-                children(props)
-            )}</RefetchContainer>
+                list={list}
+                relay={props.relay}
+                batchSize={batchSize}
+                excludeKeys={excludeKeys}>{(l, props) => (
+                    children(l, props)
+                )}</RefetchContainer>
         )
     }
 
     const RC = cRC(List)
 
-    return (props: QRProps<TOperation> & FCProps<E, N>) => {
+    return (props: QRProps<TOperation> & FCProps<N>) => {
         const {environment, variables, onError, onLoading, ...other_props} = props
         const context = React.useContext(ReactRelayContext)
+
+        let onError_ = onError ? onError : (default_renderer_props ? default_renderer_props.onError : undefined)
+        let onLoading_ = onLoading ? onLoading : (default_renderer_props ? default_renderer_props.onLoading : undefined)
         
         return (
             <QueryRenderer_<TOperation>
@@ -189,7 +187,10 @@ export function createListFC<TOperation extends OperationType, E, N>(query: Grap
               query={query}
               render={({error, props}) => {
                       if (error) {
-                          return onError(error)
+                          if (onError_ == null) {
+                              throw error
+                          }
+                          return onError_(error)
                       } else if (props) {
                           const rc_props = {
                               [key0] : props
@@ -199,7 +200,7 @@ export function createListFC<TOperation extends OperationType, E, N>(query: Grap
                           // }
                           return <RC onError={onError} {...rc_props} { ...other_props } />
                       }
-                      return onLoading
+                      return onLoading_
               } }
               />
         )
