@@ -57,10 +57,7 @@ export function createDetailFC<TOperation extends OperationType, Fragment extend
                           }
                           return onError_(error == null ? e : error)
                       } else if (props) {
-                          const fprops = {
-                              [key]: props
-                          }
-                          return <F {...fprops}>{ children }</F>
+                          return <F {...props}>{ children }</F>
                       }
                       return onLoading_ ? onLoading_ : "読み込み中"
               } }
