@@ -130,7 +130,7 @@ const RefetchContainer = <N extends Object>(props: ContainerProps<N>) => {
         rowCount: props.list.edges.length,
     })
 }
-
+export {RefetchContainer}
 
 export function createListFC<TOperation extends OperationType, N>(
     query: GraphQLTaggedNode, cRC: any, key0: string, key1: string, default_renderer_props?: RendererProps) {
