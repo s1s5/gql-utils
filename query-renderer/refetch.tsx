@@ -18,18 +18,20 @@ import {
 } from 'react-relay'
 
 
-type QRProps<TOperation extends OperationType> = {
+export type QRProps<TOperation extends OperationType> = {
     environment?: IEnvironment,
     variables: TOperation['variables'],
     cacheConfig?: CacheConfig | null
     fetchPolicy?: FetchPolicy
 } & RendererProps
 
-type EdgesType<N> = ReadonlyArray<{
+export type NodeType = {
+    readonly id: string
+}
+
+export type EdgesType<N> = ReadonlyArray<{
     readonly cursor: string,
-    readonly node : {
-        readonly id: string,
-    } & N | null,
+    readonly node : N | null,
 } | null>
 
 export type ListType<N> = {
@@ -53,7 +55,7 @@ export type ContentProps = {
 // type ListContentProps = ContentProps
 // export {ListContentProps}
 
-type FCProps<N> = {
+export type FCProps<N> = {
     batchSize?: number
     excludeKeys?: string[]
     children: (edges: ListType<N>, props: ContentProps) => any
@@ -68,7 +70,7 @@ export type ContainerProps<N> = {
 //     children: (props: ContentProps<E, N>) => JSX.Element
 } & Omit<FCProps<N>, "onQueryCompleted">
 
-const RefetchContainer = <N extends Object>(props: ContainerProps<N>) => {
+const RefetchContainer = <N extends NodeType>(props: ContainerProps<N>) => {
     const props_ = props
     // const edges = props_.list.edges!
     const batch_size = props_.batchSize ? props_.batchSize: 10
@@ -132,7 +134,7 @@ const RefetchContainer = <N extends Object>(props: ContainerProps<N>) => {
 }
 export {RefetchContainer}
 
-export function createListFC<TOperation extends OperationType, N>(
+export function createListFC<TOperation extends OperationType, N extends NodeType>(
     query: GraphQLTaggedNode, cRC: any, key0: string, key1: string, default_renderer_props?: RendererProps) {
 
     type P = {

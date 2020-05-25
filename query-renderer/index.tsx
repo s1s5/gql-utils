@@ -1,5 +1,5 @@
 import {createFragmentRenderer, createDetailFC} from './detail'
-import {createListFC, ListType, RefetchContainer, ContentProps} from './refetch'
+import {createListFC, NodeType, ListType, RefetchContainer, ContentProps} from './refetch'
 
 export {
     createFragmentRenderer,
@@ -7,6 +7,7 @@ export {
 //    createDetailQueryRenderer,
     createListFC, 
     RefetchContainer,
+    NodeType,
     ListType,
 }
 
