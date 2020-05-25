@@ -31,8 +31,8 @@ export function createFragmentRenderer<Props extends Object>(
     // TODO: このkeyをなくせないか・・・
     key: keyof Props, fragmentSpec: Record<string, GraphQLTaggedNode>) {
     type P = Props & {
-        retry?: (() => void) | null
-        children: (data: Props[typeof key] | null, retry?: (() => void) | null) => any
+        retry?: (() => void) | undefined
+        children: (data: Props[typeof key] | null, retry: (() => void) | undefined) => any
     }
     const D = (props: P) => props.children(props[key] as (Props[typeof key] | null), props.retry)
     // const D = (props: P) => props.children(props[key], props.retry)
@@ -41,7 +41,7 @@ export function createFragmentRenderer<Props extends Object>(
 
 export function createDetailFC<TOperation extends OperationType, Fragment extends Object>(
     query: GraphQLTaggedNode, FR: any, options?: {query_key?: keyof TOperation["response"], fragment_key?: string, default_renderer_props?: RendererProps}) {
-    return <T extends any>(props: QRProps<TOperation> & {children: (data: Fragment) => T} & RendererProps) => {
+    return <T extends any>(props: QRProps<TOperation> & {children: (data: Fragment, retry: (() => void) | undefined) => T} & RendererProps) => {
         const {environment, children, onError, onLoading, ...other_props} = props
         let onError_ = onError ? onError : (options && options.default_renderer_props ? options.default_renderer_props.onError : undefined)
         let onLoading_ = onLoading ? onLoading : (options && options.default_renderer_props ? options.default_renderer_props.onLoading : undefined)
