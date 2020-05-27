@@ -2,6 +2,7 @@ import * as React from 'react'
 import _clone from 'lodash/clone'
 
 import {RendererProps} from './detail'
+import {NodeType, ListType} from './types.d'
 
 import {
     IEnvironment,
@@ -18,33 +19,14 @@ import {
 } from 'react-relay'
 
 
-export type QRProps<TOperation extends OperationType> = {
+type QRProps<TOperation extends OperationType> = {
     environment?: IEnvironment,
     variables: TOperation['variables'],
     cacheConfig?: CacheConfig | null
     fetchPolicy?: FetchPolicy
 } & RendererProps
 
-export type NodeType = {
-    readonly id: string
-}
-
-export type EdgesType<N> = ReadonlyArray<{
-    readonly cursor: string,
-    readonly node : N | null,
-} | null>
-
-export type ListType<N> = {
-    readonly pageInfo: {
-        readonly hasNextPage: boolean;
-        readonly hasPreviousPage: boolean;
-        readonly startCursor: string | null;
-        readonly endCursor: string | null;
-    }
-    readonly edges: EdgesType<N>
-}
-
-export type ContentProps = {
+type ContentProps = {
     hasPreviousPage?: boolean
     hasNextPage?: boolean
     getPreviousPage?: () => Promise<number>
@@ -52,17 +34,14 @@ export type ContentProps = {
     rowCount: number
 }
 
-// type ListContentProps = ContentProps
-// export {ListContentProps}
-
-export type FCProps<N> = {
+type FCProps<N extends NodeType> = {
     batchSize?: number
     excludeKeys?: string[]
     children: (edges: ListType<N>, props: ContentProps) => any
     onQueryCompleted?: (list: ListType<N> | null, relay: RelayRefetchProp) => void
 }
 
-export type ContainerProps<N> = {
+type ContainerProps<N extends NodeType> = {
     readonly list: ListType<N>
     relay: RelayRefetchProp
 //     batchSize?: number
@@ -132,9 +111,8 @@ const RefetchContainer = <N extends NodeType>(props: ContainerProps<N>) => {
         rowCount: props.list.edges.length,
     })
 }
-export {RefetchContainer}
 
-export function createListFC<TOperation extends OperationType, N extends NodeType>(
+function createListFC<TOperation extends OperationType, N extends NodeType>(
     query: GraphQLTaggedNode, cRC: any, key0: string, key1: string, default_renderer_props?: RendererProps) {
 
     type P = {
@@ -208,3 +186,6 @@ export function createListFC<TOperation extends OperationType, N extends NodeTyp
         )
     }
 }
+
+export {QRProps, ContentProps, FCProps, ContainerProps,
+        RefetchContainer, createListFC}

@@ -1,14 +1,16 @@
 import {createFragmentRenderer, createDetailFC} from './detail'
-import {createListFC, NodeType, ListType, RefetchContainer, ContentProps} from './refetch'
+import {NodeType, EdgesType, ListType} from './types.d'
+import {createListFC, RefetchContainer, ContentProps} from './refetch'
 
 export {
+    NodeType, EdgesType, ListType,
     createFragmentRenderer,
     createDetailFC,
 //    createDetailQueryRenderer,
     createListFC, 
     RefetchContainer,
-    NodeType,
-    ListType,
+//     NodeType,
+//     ListType,
 }
 
 export type ListContentProps = ContentProps
