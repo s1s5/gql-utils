@@ -194,7 +194,11 @@ const Form = <TOperation extends MutationParameters>(props: FormProps<TOperation
                     mutation: props.mutation,
                     variables: tmp,
                     onCompleted: (response: TOperation['response'] | null, errors: ReadonlyArray<PayloadError> | null | undefined) => {
+                        set_form_errors([])
+                        set_errors([])
+
                         if (response === null) {
+                            set_form_errors(["内部エラーが発生しました。"])
                             reject(["internal error"])
                             return 
                         }
