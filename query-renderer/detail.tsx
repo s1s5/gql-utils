@@ -32,8 +32,8 @@ export function createFragmentRenderer<Props extends Object, FragmentName extend
     // TODO: このkeyをなくせないか・・・
     key: keyof Props, fragmentSpec: Record<string, GraphQLTaggedNode>) {
     type P = Props & {
-        retry?: (() => void) | undefined
-        children: (data: Props[typeof key] | null, retry: (() => void) | undefined) => any
+        retry?: (() => void) | null | undefined
+        children: (data: Props[typeof key] | null, retry: (() => void) | null | undefined) => any
     }
     const D = (props: P) => props.children(props[key] as (Props[typeof key] | null), props.retry)
     // const D = (props: P) => props.children(props[key], props.retry)
@@ -45,8 +45,8 @@ export function createFragmentRenderer<Props extends Object, FragmentName extend
     type PF = {
         [P in keyof Props]: FragmentKeyType | null
     } & {
-        retry?: (() => void) | undefined
-        children: (data: Props[typeof key] | null, retry: (() => void) | undefined) => any
+        retry?: (() => void) | null | undefined
+        children: (data: Props[typeof key] | null, retry: (() => void) | null | undefined) => any
     }
     const T = (props: PF) => {
         if (props[key] == null) {
@@ -59,12 +59,12 @@ export function createFragmentRenderer<Props extends Object, FragmentName extend
     // return createFragmentContainer(D, fragmentSpec)
 }
 
-export function createDetailFC<TOperation extends OperationType, Fragment extends Object>(
-    query: GraphQLTaggedNode, FR: any, options?: {query_key?: keyof TOperation["response"], fragment_key?: string, default_renderer_props?: RendererProps}) {
-    return <T extends any>(props: QRProps<TOperation> & {children: (data: Fragment, retry: (() => void) | undefined) => T} & RendererProps) => {
+export function createDetailFC<TOperation extends OperationType>(
+    query: GraphQLTaggedNode, query_key: keyof TOperation["response"], default_renderer_props?: RendererProps) {
+    return <T extends React.ReactNode>(props: QRProps<TOperation> & {children: (data: TOperation["response"][typeof query_key], retry: (() => void) | null | undefined) => T} & RendererProps) => {
         const {environment, children, onError, onLoading, ...other_props} = props
-        let onError_ = onError ? onError : (options && options.default_renderer_props ? options.default_renderer_props.onError : undefined)
-        let onLoading_ = onLoading ? onLoading : (options && options.default_renderer_props ? options.default_renderer_props.onLoading : undefined)
+        let onError_ = onError ? onError : (default_renderer_props ? default_renderer_props.onError : undefined)
+        let onLoading_ = onLoading ? onLoading : (default_renderer_props ? default_renderer_props.onLoading : undefined)
 
         const context = React.useContext(ReactRelayContext)
         let e = environment ? environment : context!.environment
@@ -87,13 +87,7 @@ export function createDetailFC<TOperation extends OperationType, Fragment extend
                           }
                           return onError_(error)
                       } else if (props) {
-                          if (options && options.query_key && options.fragment_key) {
-                              const props_ = {
-                                  [options.fragment_key]: props[options.query_key]
-                              }
-                              return <FR retry={retry} {...props_}>{ children }</FR>
-                          }
-                          return <FR retry={retry} {...props}>{ children }</FR>
+                          return children(props[query_key], retry)
                       }
                       return onLoading_ ? onLoading_ : "読み込み中"
               } }
