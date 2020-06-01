@@ -16,6 +16,7 @@ import {
     QueryRenderer as QueryRenderer_,
     FetchPolicy,
     RelayRefetchProp,
+    RefetchOptions,
 } from 'react-relay'
 
 
@@ -24,6 +25,7 @@ type QRProps<TOperation extends OperationType> = {
     variables: TOperation['variables'],
     cacheConfig?: CacheConfig | null
     fetchPolicy?: FetchPolicy
+    refetchOptions?: RefetchOptions
 } & RendererProps
 
 type ContentProps = {
@@ -47,6 +49,7 @@ type ContainerProps<N extends NodeType> = {
 //     batchSize?: number
 //     excludeKeys?: string[]
 //     children: (props: ContentProps<E, N>) => JSX.Element
+    refetchOptions?: RefetchOptions
 } & Omit<FCProps<N>, "onQueryCompleted">
 
 const RefetchContainer = <N extends NodeType>(props: ContainerProps<N>) => {
@@ -75,7 +78,8 @@ const RefetchContainer = <N extends NodeType>(props: ContainerProps<N>) => {
                     }
 
                     resolve(batch_size)  // TODO: 読み込み数を正確に計測しないと行けない
-                }
+                },
+                props.refetchOptions,
             )
         })
     )
@@ -98,7 +102,8 @@ const RefetchContainer = <N extends NodeType>(props: ContainerProps<N>) => {
                         throw error
                     }
                     resolve()
-                }
+                },
+                props.refetchOptions,
             )
         })
     )
@@ -123,8 +128,8 @@ function createListFC<TOperation extends OperationType, N extends NodeType>(
         relay: RelayRefetchProp
     }
 
-    const List = (props: P & FCProps<N> & RendererProps) => {
-        const {onQueryCompleted, batchSize, excludeKeys, children, onError} = props
+    const List = (props: P & FCProps<N> & RendererProps & {refetchOptions?: RefetchOptions}) => {
+        const {onQueryCompleted, batchSize, excludeKeys, children, onError, refetchOptions} = props
         if (props[key0] == null || props[key0][key1] == null || props[key0][key1]!.edges == null) {
             const e = Error("アクセス権限がないか、予期しないエラーです")
             if (onError == null) {
@@ -145,26 +150,38 @@ function createListFC<TOperation extends OperationType, N extends NodeType>(
                 list={list}
                 relay={props.relay}
                 batchSize={batchSize}
-                excludeKeys={excludeKeys}>{(l, props) => (
-                    children(l, props)
-                )}</RefetchContainer>
+                excludeKeys={excludeKeys}
+                refetchOptions={refetchOptions}
+            >{(l, props) => (
+                children(l, props)
+            )}</RefetchContainer>
         )
     }
 
     const RC = cRC(List)
 
     return (props: QRProps<TOperation> & FCProps<N>) => {
-        const {environment, variables, onError, onLoading, ...other_props} = props
+        const {environment, variables, onError, onLoading, cacheConfig, fetchPolicy, ...other_props} = props
         const context = React.useContext(ReactRelayContext)
+
+        let e = environment ? environment : context!.environment
+        let q = query
+        if (process.env.NODE_ENV == "development") {
+            const [_e, _sE] = React.useState(e)
+            const [_q, _sQ] = React.useState(q)
+            e = _e
+            q = _q
+        }
+
 
         let onError_ = onError ? onError : (default_renderer_props ? default_renderer_props.onError : undefined)
         let onLoading_ = onLoading ? onLoading : (default_renderer_props ? default_renderer_props.onLoading : undefined)
         
         return (
             <QueryRenderer_<TOperation>
-              environment={environment ? environment : context!.environment}
+              environment={ e}
               variables={ props.variables }
-              query={query}
+              query={ q }
               render={({error, props}) => {
                       if (error) {
                           if (onError_ == null) {
@@ -182,6 +199,8 @@ function createListFC<TOperation extends OperationType, N extends NodeType>(
                       }
                       return onLoading_
               } }
+              cacheConfig={ cacheConfig }
+              fetchPolicy={ fetchPolicy }
               />
         )
     }
