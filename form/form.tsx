@@ -251,9 +251,19 @@ const Form = <TOperation extends MutationParameters>(props: FormProps<TOperation
         [variables, uploadables, commit_with_value])
 
     React.useEffect(() => {
-        set_has_difference(!_isEqual(variables, initial_variables))
+        let has_uploadables = false
+        Object.entries(uploadables).map((e) => {
+            const [key, value]: [string, any] = e
+            if (value.constructor === Array) {
+                has_uploadables = true
+            } else if (value) {
+                has_uploadables = true
+            }
+        })
+
+        set_has_difference(has_uploadables || !_isEqual(variables, initial_variables))
         props.onChange && props.onChange(variables)
-    }, [variables]);
+    }, [variables, uploadables]);
 
     const context: ContextType = {
         formBaseId: props.id,
