@@ -101,7 +101,7 @@ const ContextWrapper = <P, T>(props: CWProps<P, T>) => {
     const Component_ = Component as any  // TODO: なんでかうまく行かない。。どういうタイプを指定すれば？
     return <Component_
                formId={ formId }
-               value={ value_ == null ? "" : value_ }
+               value={ value_ /* value_ == null ? "" : value_ */ }
                onChange={ _on_change }
                onUpload={ _on_upload }
                errors={_errors}
