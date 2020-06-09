@@ -43,7 +43,7 @@ export function createFragmentRenderer<Props extends Object, FragmentName extend
         readonly " $fragmentRefs": FragmentRefs<FragmentName>
     }
     type PF = {
-        [P in keyof Props]: FragmentKeyType | null
+        [P in keyof Props]: FragmentKeyType | null | undefined
     } & {
         retry?: (() => void) | null | undefined
         children: (data: Props[typeof key] | null, retry: (() => void) | null | undefined) => any
