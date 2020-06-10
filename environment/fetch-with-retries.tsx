@@ -58,7 +58,7 @@ function fetchWithRetries(uri: string, initWithRetries?: InitWithRetries | null)
                             // Got a response code that indicates success, resolve the promise.
                             resolve(response);
                         } else if (response.status >= 400 && response.status < 500) {
-                            resolve(response);
+                            reject(new Error(response.statusText))
                         } else if (shouldRetry(requestsAttempted)) {
                             // Fetch was not successful, retrying.
                             // TODO(#7595849): Only retry on transient HTTP errors.
@@ -101,7 +101,6 @@ function fetchWithRetries(uri: string, initWithRetries?: InitWithRetries | null)
         function shouldRetry(attempt: number): boolean {
             return ExecutionEnvironment.canUseDOM && attempt <= _retryDelays.length;
         }
-
         sendTimedRequest();
     });
 }

@@ -112,7 +112,11 @@ import {FormProps} from './form-props'
 //      }
 
 const format_error_messages = (errors:any) => {
-    return errors.map((e:any) => e.message)
+    try {
+        return errors.map((e:any) => e.message)
+    } catch {
+        return ["Unexpected Error"]  // TODO: 何らかの形で報告しないと
+    }
 }
 
 
@@ -225,7 +229,12 @@ const Form = <TOperation extends MutationParameters>(props: FormProps<TOperation
                         }
                     },
                     onError: (error: any) => {
-                        const error_messages = format_error_messages(error.errors)
+                        let error_messages: string[] = []
+                        if (error instanceof Error) {
+                            error_messages = [error.toString()]
+                        } else {
+                            error_messages = format_error_messages(error.errors)
+                        }
                         set_form_errors(error_messages)
                         reject(error_messages)
                     },
