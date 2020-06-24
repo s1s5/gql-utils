@@ -1,4 +1,5 @@
-import FormContext, {ContextType as FormContextType} from './form-context'
+import {ContextType as FormContextType} from './form-context-type'
+import FormContext from './form-context'
 import FormGroup from './form-group'
 import Form from './form'
 import BaseForm from './base-form'
