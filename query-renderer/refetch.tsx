@@ -65,10 +65,12 @@ const RefetchContainer = <N extends NodeType>(props: ContainerProps<N>) => {
                 (refetchVariables) => {
                     const _r = _clone(refetchVariables)
                     if (props.excludeKeys) {
-                        for (let key in props.excludeKeys) {
-                            delete _r[key]
-                        }
+                        props.excludeKeys.map(key => {
+                            _r[key] = null
+                        })
                     }
+                    _r['first'] = null
+                    _r['after'] = null
                     return { ..._r, last: batch_size, before: props_.list.pageInfo.startCursor, }
                 },
                 null,
@@ -91,9 +93,11 @@ const RefetchContainer = <N extends NodeType>(props: ContainerProps<N>) => {
                     const _r = _clone(refetchVariables)
                     if (props.excludeKeys) {
                         for (let key in props.excludeKeys) {
-                            delete _r[key]
+                            _r[key] = null
                         }
                     }
+                    _r['before'] = null
+                    _r['last'] = null
                     return { ..._r, first: batch_size, after: props_.list.pageInfo.endCursor, }
                 },
                 null,
