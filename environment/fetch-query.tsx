@@ -122,16 +122,17 @@ const fetchQuery = async (url: string, request: RequestParameters, variables: Va
 
         const data = await handleData(response);
 
+        // TODO: handle multiple error
         if (response.status === 401) {
-            throw data.errors;
+            throw data.errors[0];
         }
 
         if (isMutation(request) && data.errors) {
-            throw data;
+            throw data.errors[0];
         }
 
         if (!data.data) {
-            throw data.errors;
+            throw data.errors[0];  // TODO: ないときもありそう
         }
 
         return data;
@@ -164,7 +165,7 @@ const cacheHandler = async (
     getRequestInit?: () => Omit<RequestInit, "body">,
 ) => {
     const queryID = request.text!;
-    
+
     if (isMutation(request)) {
         queryResponseCache.clear();
         return fetchQuery(url, request, variables, uploadables, getRequestInit);
