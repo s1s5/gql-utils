@@ -187,7 +187,7 @@ const Form = <TOperation extends MutationParameters>(props: FormProps<TOperation
             // console.log('u = ', u)
             // console.log(value_)
             const tmp = _cloneDeep(value_)
-            Object.keys(value_).map((key) => {
+            Object.keys(value_).filter(key => key.endsWith('Input')).map((key) => {
                 tmp[key].formPrefix = key.substr(0, key.length - 5)
             })
             // console.log("value_ => ", value_)
