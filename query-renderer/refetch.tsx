@@ -39,7 +39,7 @@ type ContentProps = {
 type FCProps<N extends NodeType> = {
     batchSize?: number
     excludeKeys?: string[]
-    children: (edges: ListType<N>, props: ContentProps) => any
+    children: (edges: ListType<N>, props: ContentProps, retry?: () => void) => any
     onQueryCompleted?: (list: ListType<N> | null, relay: RelayRefetchProp) => void
 }
 
@@ -50,6 +50,7 @@ type ContainerProps<N extends NodeType> = {
 //     excludeKeys?: string[]
 //     children: (props: ContentProps<E, N>) => JSX.Element
     refetchOptions?: RefetchOptions
+    retry: (() => void) | undefined
 } & Omit<FCProps<N>, "onQueryCompleted">
 
 const RefetchContainer = <N extends NodeType>(props: ContainerProps<N>) => {
@@ -118,7 +119,7 @@ const RefetchContainer = <N extends NodeType>(props: ContainerProps<N>) => {
         getPreviousPage: get_previous_page,
         getNextPage: get_next_page,
         rowCount: props.list.edges.length,
-    })
+    }, props.retry)
 }
 
 function createListFC<TOperation extends OperationType, N extends NodeType>(
@@ -130,10 +131,11 @@ function createListFC<TOperation extends OperationType, N extends NodeType>(
         },
     } & {
         relay: RelayRefetchProp
+        retry: () => void
     }
 
     const List = (props: P & FCProps<N> & RendererProps & {refetchOptions?: RefetchOptions}) => {
-        const {onQueryCompleted, batchSize, excludeKeys, children, onError, refetchOptions} = props
+        const {onQueryCompleted, batchSize, excludeKeys, children, onError, refetchOptions, retry} = props
         if (props[key0] == null || props[key0][key1] == null || props[key0][key1]!.edges == null) {
             const e = Error("アクセス権限がないか、予期しないエラーです")
             if (onError == null) {
@@ -156,8 +158,9 @@ function createListFC<TOperation extends OperationType, N extends NodeType>(
                 batchSize={batchSize}
                 excludeKeys={excludeKeys}
                 refetchOptions={refetchOptions}
-            >{(l, props) => (
-                children(l, props)
+                retry={retry}
+            >{(l, props, retry_) => (
+                children(l, props, retry_)
             )}</RefetchContainer>
         )
     }
@@ -186,7 +189,7 @@ function createListFC<TOperation extends OperationType, N extends NodeType>(
               environment={ e}
               variables={ props.variables }
               query={ q }
-              render={({error, props}) => {
+              render={({error, props, retry}) => {
                       if (error) {
                           if (onError_ == null) {
                               throw error
@@ -199,7 +202,7 @@ function createListFC<TOperation extends OperationType, N extends NodeType>(
                           // if ((query as any)[key1] == null || (query as any)[key1].edges == null) {
                           //     return onError(Error("未知のエラーです"))
                           // }
-                          return <RC onError={onError} {...rc_props} { ...other_props } />
+                          return <RC onError={onError} retry={retry} {...rc_props} { ...other_props } />
                       }
                       return onLoading_
               } }
