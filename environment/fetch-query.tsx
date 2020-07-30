@@ -21,7 +21,6 @@ function getRequestBodyWithUploadables(request: RequestParameters, variables: Va
     formData.append('query', request.text!);
     formData.append('variables', JSON.stringify(variables));
 
-    // console.log(uploadables)
     const m:any = {}
     Object.keys(uploadables).forEach(key => {
         if (Object.prototype.hasOwnProperty.call(uploadables, key)) {
@@ -40,27 +39,18 @@ function getRequestBodyWithUploadables(request: RequestParameters, variables: Va
     });
 
     Object.keys(m).forEach(key => {
-        // console.log(m[key])
         m[key].sort()
         m[key].map((e:any) => {
-            const [ind, file] = e
-            // console.log(key, ind, file)
-            formData.append(key, file)
+            formData.append(key, e[1])
         })
     })
-
-    // Object.keys(uploadables).forEach(key => {
-    //     if (Object.prototype.hasOwnProperty.call(uploadables, key)) {
-    //         formData.append(key, uploadables[key]);
-    //     }
-    // });
 
     return formData;
 }
 
 function getRequestBodyWithoutUplodables(request: RequestParameters, variables: Variables) {
     return JSON.stringify({
-        name: request.name, // used by graphql mock on tests
+        name: request.name,  // used by graphql mock on tests
         query: request.text, // GraphQL text from input
         variables,
     });
@@ -90,12 +80,15 @@ export const getHeaders = (uploadables?: UploadableMap | null) : Record<string, 
 
 
 
-const fetchQuery = async (url: string, request: RequestParameters, variables: Variables, uploadables?: UploadableMap | null, getRequestInit?: () => Omit<RequestInit, "body">) => {
+const fetchQuery = async (url: string, request: RequestParameters,
+                          variables: Variables, uploadables: UploadableMap | null | undefined,
+                          getRequestInit: (() => Omit<RequestInit, "body">) | undefined,
+                          fetchTimeout: number, retryDelays: number[]) => {
     try {
         let _method: string = 'POST'
         let _headers: HeadersInit = {}
         let _other_options: Omit<RequestInit, "method" | "body" | "headers"> = {}
-        if (!(getRequestInit == null)) {
+        if (getRequestInit != null) {
             const {method, headers, ...other_options} = getRequestInit()
             if (!(method == null)) {
                 _method = method
@@ -115,8 +108,8 @@ const fetchQuery = async (url: string, request: RequestParameters, variables: Va
             method: _method,
             headers,
             body,
-            fetchTimeout: 20000,
-            retryDelays: [1000, 3000, 5000],
+            fetchTimeout: fetchTimeout,
+            retryDelays: retryDelays,
             ..._other_options
         });
 
@@ -132,7 +125,10 @@ const fetchQuery = async (url: string, request: RequestParameters, variables: Va
         }
 
         if (!data.data) {
-            throw data.errors[0];  // TODO: ないときもありそう
+            if (data.errors.length == 0) {
+                throw Error("Unknown Error occurred")
+            }
+            throw data.errors[0]
         }
 
         return data;
@@ -153,7 +149,7 @@ const fetchQuery = async (url: string, request: RequestParameters, variables: Va
     }
 };
 
-const oneMinute = 60 * 1000;
+const oneMinute = 5 * 60 * 1000;
 const queryResponseCache = new QueryResponseCache({ size: 250, ttl: oneMinute });
 
 const cacheHandler = async (
@@ -161,14 +157,17 @@ const cacheHandler = async (
     request: RequestParameters,
     variables: Variables,
     cacheConfig: CacheConfig,
-    uploadables?: UploadableMap | null,
-    getRequestInit?: () => Omit<RequestInit, "body">,
+    uploadables: UploadableMap | null | undefined,
+    getRequestInit: (() => Omit<RequestInit, "body">) | undefined,
+    clearCacheOnMutate: boolean | undefined,
 ) => {
     const queryID = request.text!;
 
     if (isMutation(request)) {
-        queryResponseCache.clear();
-        return fetchQuery(url, request, variables, uploadables, getRequestInit);
+        if (clearCacheOnMutate) {
+            queryResponseCache.clear();
+        }
+        return fetchQuery(url, request, variables, uploadables, getRequestInit, 20000, []);
     }
     
     const fromCache = queryResponseCache.get(queryID, variables);
@@ -176,7 +175,7 @@ const cacheHandler = async (
         return fromCache;
     }
     
-    const fromServer = await fetchQuery(url, request, variables, uploadables, getRequestInit);
+    const fromServer = await fetchQuery(url, request, variables, uploadables, getRequestInit, 20000, [1000, 3000, 5000]);
     if (fromServer) {
         queryResponseCache.set(queryID, variables, fromServer);
     }

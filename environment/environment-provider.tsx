@@ -21,6 +21,7 @@ type Props = {
     wsUrl?: string,
     children: React.ReactNode,
     getRequestInit?: () => Omit<RequestInit, "body">,
+    clearCacheOnMutate?: boolean
 }
 
 let _global_counter = 0
@@ -34,13 +35,14 @@ const EnvironmentProvider = (props: Props) => {
     const [client, setClient] = React.useState<SubscriptionClient>()
     const [environment, setEnvironment] = React.useState<Environment>()
 
-    React.useEffect(() => {
+    React.useLayoutEffect(() => {
         const fetch_query = (
             request: RequestParameters,
             variables: Variables,
             cacheConfig: CacheConfig,
             uploadables?: UploadableMap | null) => fetchQuery(
-                props.postUrl, request, variables, cacheConfig, uploadables, props.getRequestInit)
+                props.postUrl, request, variables, cacheConfig, uploadables,
+                props.getRequestInit, props.clearCacheOnMutate)
 
         let network
         if (props.wsUrl) {
