@@ -12,7 +12,7 @@
 ## subscription
 
 ``` jsx
-import * as React from 'react'
+import React from 'react'
 
 import { graphql, Observer } from 'relay-runtime'
 import { SubscriptionRenderer } from '../gql-utils'

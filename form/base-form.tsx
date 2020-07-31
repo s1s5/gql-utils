@@ -1,4 +1,4 @@
-import * as React from 'react'
+import React from 'react'
 
 import _cloneDeep from 'lodash/cloneDeep'
 import _isEqual from 'lodash/isEqual'

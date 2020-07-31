@@ -1,4 +1,4 @@
-import * as React from 'react'
+import React from 'react'
 // import _ from 'lodash'
 import _cloneDeep from 'lodash/cloneDeep'
 import _clone from 'lodash/clone'
