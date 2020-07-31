@@ -159,14 +159,11 @@ const cacheHandler = async (
     cacheConfig: CacheConfig,
     uploadables: UploadableMap | null | undefined,
     getRequestInit: (() => Omit<RequestInit, "body">) | undefined,
-    clearCacheOnMutate: boolean | undefined,
 ) => {
     const queryID = request.text!;
 
     if (isMutation(request)) {
-        if (clearCacheOnMutate) {
-            queryResponseCache.clear();
-        }
+        queryResponseCache.clear();
         return fetchQuery(url, request, variables, uploadables, getRequestInit, 20000, []);
     }
     

@@ -21,7 +21,6 @@ type Props = {
     wsUrl?: string,
     children: React.ReactNode,
     getRequestInit?: () => Omit<RequestInit, "body">,
-    clearCacheOnMutate?: boolean
 }
 
 let _global_counter = 0
@@ -42,7 +41,7 @@ const EnvironmentProvider = (props: Props) => {
             cacheConfig: CacheConfig,
             uploadables?: UploadableMap | null) => fetchQuery(
                 props.postUrl, request, variables, cacheConfig, uploadables,
-                props.getRequestInit, props.clearCacheOnMutate)
+                props.getRequestInit)
 
         let network
         if (props.wsUrl) {
