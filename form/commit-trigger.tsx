@@ -5,7 +5,7 @@ import FormContext from './form-context'
 type Props<T> = {
     onSuccess?: (response: T) => unknown,
     onFailure?: (response: T) => unknown,
-    children: ((submit: () => Promise<any>) => JSX.Element) | React.ReactNode
+    children: ((submit: () => Promise<any>) => React.ReactNode) | React.ReactNode
 }
 
 const CommitTrigger = <T extends Object>(props: Props<T>) => {

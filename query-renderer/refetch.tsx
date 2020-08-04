@@ -48,7 +48,7 @@ type ContainerProps<N extends NodeType> = {
     relay: RelayRefetchProp
 //     batchSize?: number
 //     excludeKeys?: string[]
-//     children: (props: ContentProps<E, N>) => JSX.Element
+//     children: (props: ContentProps<E, N>) => React.ReactNode
     refetchOptions?: RefetchOptions
     retry: (() => void) | undefined
 } & Omit<FCProps<N>, "onQueryCompleted">
