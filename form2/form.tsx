@@ -1,7 +1,5 @@
 import React from 'react'
 
-// import {UploadableMap} from 'relay-runtime'
-
 import _cloneDeep from 'lodash/cloneDeep'
 import _isEqual from 'lodash/isEqual'
 import _toPairs from 'lodash/toPairs'
@@ -12,34 +10,36 @@ type Props<Input> = {
         formRef: React.RefObject<HTMLFormElement>
         value: Input
         files: FilesInput<Input>
-        // uploadables: UploadableMap
-        // commit: (form: StateForm<Input>, uploadables: UploadableMap) => Promise<Response>  // , ReadonlyArray<{field: string, message: string}>
+        onChange: OnChangeField<Input>
+        onUpload: OnUploadField<Input>
         editing: boolean
-        // committing: boolean
     }) => React.ReactNode
     onChange?: (value: Input, files: FilesInput<Input>) => unknown
 }
 
 type FilesInput<Input> = {
-        [K in keyof Input]: {
-            [L in keyof Input[K]]: File[] | undefined
-        }
+    [K in keyof Input]: {
+        [L in keyof Input[K]]: File[] | undefined
+    }
+}
+
+type OnChangeField<Input> = {
+    [K in keyof Input]: {
+        [L in keyof Input[K]]: (value: Input[K][L]) => unknown
+    }
+}
+type OnUploadField<Input> = {
+    [K in keyof Input]: {
+        [L in keyof Input[K]]: (files: File []) => unknown
+    }
 }
 
 type State<Input> = {
     initialValue: Input
     value: Input
     files: FilesInput<Input>
-    onChange: {
-        [K in keyof Input]: {
-            [L in keyof Input[K]]: (value: Input[K][L]) => unknown
-        }
-    }
-    onUpload: {
-        [K in keyof Input]: {
-            [L in keyof Input[K]]: (files: File []) => unknown
-        }
-    }
+    onChange: OnChangeField<Input>
+    onUpload: OnUploadField<Input>
     editing: boolean
     hasChangedValues: boolean
     hasUploadables: boolean
@@ -47,8 +47,9 @@ type State<Input> = {
 
 function on_field_change<Input extends Object>(target: Form<Input>, key0: string, key1: string, value: any) {
     const form: any = _cloneDeep(target.state.value)
-    form[key0][key1].value = value
-    target.setState({value: form}, () => {
+    form[key0][key1] = value
+    const has_changed = !_isEqual(form, target.state.initialValue)
+    target.setState({value: form, editing: has_changed || target.state.hasUploadables, hasChangedValues: has_changed}, () => {
         target.props.onChange && target.props.onChange(target.state.value, target.state.files)
     })
 }
@@ -56,7 +57,17 @@ function on_field_change<Input extends Object>(target: Form<Input>, key0: string
 function on_field_upload<Input extends Object>(target: Form<Input>, key0: string, key1: string, files: File[]) {
     const form: any = _cloneDeep(target.state.files)
     form[key0][key1] = files
-    target.setState({files: form}, () => {
+
+    const has_uploadables = _toPairs(form).reduce((a, c) => {
+        return a || _toPairs(c[1] as any).reduce((b, d) => {
+            const o: any = d[1]
+            if (o.constructor === Array) {
+                return b || (!!o.length)
+            }
+            return b
+        }, false)
+    }, false)
+    target.setState({files: form, editing: has_uploadables || target.state.hasChangedValues, hasUploadables: has_uploadables}, () => {
         target.props.onChange && target.props.onChange(target.state.value, target.state.files)
     })
 }
@@ -99,6 +110,8 @@ class Form<Input extends Object> extends React.Component<Props<Input>, State<Inp
                 formRef: this.form_ref,
                 value: this.state.value,
                 files: this.state.files,
+                onChange: this.state.onChange,
+                onUpload: this.state.onUpload,
                 editing: this.state.editing,
             })
         }</form>
