@@ -1,4 +1,5 @@
 import React from 'react'
+import _cloneDeep from 'lodash/cloneDeep'
 import _toPairs from 'lodash/toPairs'
 
 import {PayloadError, Environment, GraphQLTaggedNode, UploadableMap,  DeclarativeMutationConfig, SelectorStoreUpdater} from 'relay-runtime'
@@ -45,6 +46,9 @@ type Props<TOperation extends MutationParameters> = {
         onChange: Form<TOperation["variables"]>["state"]["onChange"]
         onUpload: Form<TOperation["variables"]>["state"]["onUpload"]
         editing: boolean
+        errorList: ErrorListField<TOperation["variables"]>
+        errors: ErrorsField<TOperation["variables"]>
+        hasError: boolean
     }) => React.ReactNode
 }
 
@@ -56,7 +60,8 @@ type State<TOperation extends MutationParameters> = {
 
 class MutationForm_<TOperation extends MutationParameters> extends React.Component<Props<TOperation>, State<TOperation>> {
 
-    commit = (variables: TOperation["variables"], files: Form<TOperation["variables"]>["state"]["files"]) => {
+    commit = (values: TOperation["variables"], files: Form<TOperation["variables"]>["state"]["files"]) => {
+        const variables: any = _cloneDeep(values)
         const uploadables: UploadableMap = {}
         _toPairs(files).map((e) => {
             const [key0, f] = e
@@ -66,9 +71,11 @@ class MutationForm_<TOperation extends MutationParameters> extends React.Compone
                     fs.map((v: File | Blob, i: number) => {
                         uploadables[`${key0}-${key1}[${i}]`] = v
                     })
+                    variables[key0].formPrefix = key0
                 } else {
                     uploadables[`${key0}-${key1}`] = fs
-                }                
+                    variables[key0].formPrefix = key0
+                }
             })
         })
 
@@ -143,6 +150,9 @@ class MutationForm_<TOperation extends MutationParameters> extends React.Compone
                         }
                         return null
                     },
+                    errorList: this.state.errorList,
+                    errors: this.state.errors,
+                    hasError: this.state.hasError,
                     ...other_props
                 })
           }}</Form>
