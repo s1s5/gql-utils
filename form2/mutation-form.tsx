@@ -31,7 +31,7 @@ type ErrorListField<Input> = {
 
 type ErrorsField<Input> = {
     [K in keyof Input]?: {
-        [L in keyof Input[K]]: string | null | undefined
+        [T in string]: string | null | undefined
     }
 }
 
@@ -60,7 +60,7 @@ class ErrorHandler<TOperation extends MutationParameters> {
     get_error_message_list = (key0: keyof TOperation["response"], exclude_keys: string[]) => {
         const value = this.error_list[key0]
         if (value) {
-            return _flatten(value.filter(e => e && (!_includes(exclude_keys, e.field))).map(e => e!.messages))
+            return value.filter(e => e && (!_includes(exclude_keys, e.field)))
         }
         return []
     }
@@ -78,19 +78,21 @@ type Props<TOperation extends MutationParameters> = {
         onChange: Form<TOperation["variables"]>["state"]["onChange"]
         onUpload: Form<TOperation["variables"]>["state"]["onUpload"]
         editing: boolean
-        error: ErrorHandler<TOperation> | null
+        errorHandler: ErrorHandler<TOperation> | null
+        error: ErrorsField<TOperation["response"]> | null
         hasError: boolean
     }) => React.ReactNode
 }
 
 type State<TOperation extends MutationParameters> = {
-    error: ErrorHandler<TOperation> | null
+    errorHandler: ErrorHandler<TOperation> | null
+    error: ErrorsField<TOperation["response"]> | null
     hasError: boolean
 }
 
 
 function get_initial_state<TOperation extends MutationParameters>(props: Props<TOperation>) : State<TOperation> {
-    return {error: null, hasError: false}
+    return {errorHandler: null, error: null, hasError: false}
 }
 
 class MutationForm<TOperation extends MutationParameters> extends React.Component<Props<TOperation>, State<TOperation>> {
@@ -138,21 +140,22 @@ class MutationForm<TOperation extends MutationParameters> extends React.Componen
                         //     }
                         //     return a
                         // }, {} as any)
-                        // const error: ErrorsField<TOperation["variables"]> = _toPairs(response).reduce((a, e) => {
-                        //     if (e[1]?.errors) {
-                        //         a[e[0]] = e[1].errors.filter(i => i).map(j => j!).reduce((b, f) => {
-                        //             if (f.field in b) {
-                        //                 b[f.field].push(f.messages)
-                        //             } else {
-                        //                 b[f.field] = [f.messages]
-                        //             }
-                        //             return b
-                        //         }, {} as any)
-                        //     } else {
-                        //         a[e[0]] = null
-                        //     }
-                        //     return a
-                        // }, {} as any)
+
+                        const error: ErrorsField<TOperation["variables"]> = _toPairs(response).reduce((a, e) => {
+                            if (e[1]?.errors) {
+                                a[e[0]] = e[1].errors.filter(i => i).map(j => j!).reduce((b, f) => {
+                                    if (f.field in b) {
+                                        b[f.field].push(f.messages)
+                                    } else {
+                                        b[f.field] = [f.messages]
+                                    }
+                                    return b
+                                }, {} as any)
+                            } else {
+                                a[e[0]] = null
+                            }
+                            return a
+                        }, {} as any)
 
                         let has_error = false
                         for (let form in response) {
@@ -162,7 +165,7 @@ class MutationForm<TOperation extends MutationParameters> extends React.Componen
                             }
                         }
 
-                        this.setState({error: new ErrorHandler(response), hasError: has_error}, () => {
+                        this.setState({errorHandler: new ErrorHandler(response), error, hasError: has_error}, () => {
                             resolve(response)
                         })
                     },
@@ -190,6 +193,7 @@ class MutationForm<TOperation extends MutationParameters> extends React.Componen
                               }
                               return null
                           },
+                          errorHandler: this.state.errorHandler,
                           error: this.state.error,
                           hasError: this.state.hasError,
                           ...other_props
