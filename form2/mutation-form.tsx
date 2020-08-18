@@ -1,12 +1,14 @@
 import React from 'react'
 import _cloneDeep from 'lodash/cloneDeep'
 import _toPairs from 'lodash/toPairs'
+import _includes from 'lodash/includes'
+import _flatten from 'lodash/flatten'
 
-import {PayloadError, Environment, GraphQLTaggedNode, UploadableMap,  DeclarativeMutationConfig, SelectorStoreUpdater} from 'relay-runtime'
-import {commitMutation} from 'react-relay'
+import {PayloadError, IEnvironment, GraphQLTaggedNode, UploadableMap,  DeclarativeMutationConfig, SelectorStoreUpdater, RelayContext} from 'relay-runtime'
+import {ReactRelayContext, commitMutation} from 'react-relay'
 
-import withEnvironment from '../environment/with-environment'
 import {Form} from './form'
+
 
 
 type FormErrorMessages = ReadonlyArray<{
@@ -18,7 +20,7 @@ type FormErrorMessages = ReadonlyArray<{
 export interface MutationParameters {
     readonly response: {[T in string]: {
         readonly errors: FormErrorMessages | null
-    }}
+    } | null}
     readonly variables: {};
     readonly rawResponse?: {};
 }
@@ -33,8 +35,38 @@ type ErrorsField<Input> = {
     }
 }
 
+class ErrorHandler<TOperation extends MutationParameters> {
+    error_list: ErrorListField<TOperation["response"]>
+
+    constructor(response: TOperation["response"]) {
+        this.error_list = _toPairs(response).reduce((a, e) => {
+            if (e[1]?.errors) {
+                a[e[0]] = e[1].errors
+            } else {
+                a[e[0]] = []
+            }
+            return a
+        }, {} as any)
+    }
+
+    get_error_message = (key0: keyof TOperation["response"], key1: string, join: string = ',') => {
+        const value = this.error_list[key0]
+        if (value) {
+            return _flatten(value.filter(e => e && e.field == key1).map(e => e!.messages)).join(join)
+        }
+        return undefined
+    }
+
+    get_error_message_list = (key0: keyof TOperation["response"], exclude_keys: string[]) => {
+        const value = this.error_list[key0]
+        if (value) {
+            return _flatten(value.filter(e => e && (!_includes(exclude_keys, e.field))).map(e => e!.messages))
+        }
+        return []
+    }
+}
+
 type Props<TOperation extends MutationParameters> = {
-    environment: Environment
     formData: TOperation["variables"]
     mutation: GraphQLTaggedNode
     configs?: DeclarativeMutationConfig[],
@@ -46,21 +78,25 @@ type Props<TOperation extends MutationParameters> = {
         onChange: Form<TOperation["variables"]>["state"]["onChange"]
         onUpload: Form<TOperation["variables"]>["state"]["onUpload"]
         editing: boolean
-        errorList: ErrorListField<TOperation["variables"]>
-        errors: ErrorsField<TOperation["variables"]>
+        error: ErrorHandler<TOperation> | null
         hasError: boolean
     }) => React.ReactNode
 }
 
 type State<TOperation extends MutationParameters> = {
-    errorList: ErrorListField<TOperation["variables"]>
-    errors: ErrorsField<TOperation["variables"]>
+    error: ErrorHandler<TOperation> | null
     hasError: boolean
 }
 
-class MutationForm_<TOperation extends MutationParameters> extends React.Component<Props<TOperation>, State<TOperation>> {
 
-    commit = (values: TOperation["variables"], files: Form<TOperation["variables"]>["state"]["files"]) => {
+function get_initial_state<TOperation extends MutationParameters>(props: Props<TOperation>) : State<TOperation> {
+    return {error: null, hasError: false}
+}
+
+class MutationForm<TOperation extends MutationParameters> extends React.Component<Props<TOperation>, State<TOperation>> {
+    state = get_initial_state(this.props)
+
+    commit = (environment: IEnvironment, values: TOperation["variables"], files: Form<TOperation["variables"]>["state"]["files"]) => {
         const variables: any = _cloneDeep(values)
         const uploadables: UploadableMap = {}
         _toPairs(files).map((e) => {
@@ -81,7 +117,7 @@ class MutationForm_<TOperation extends MutationParameters> extends React.Compone
 
         const p = new Promise<TOperation["response"]>((resolve, reject) => {
             commitMutation(
-                this.props.environment,
+                environment,
                 {
                     mutation: this.props.mutation,
                     variables: variables,
@@ -96,35 +132,37 @@ class MutationForm_<TOperation extends MutationParameters> extends React.Compone
                             return 
                         }
 
-                        const error_list: ErrorListField<TOperation["variables"]> = _toPairs(response).reduce((a, e) => {
-                            a[e[0]] = e[1].errors
-                            return a
-                        }, {} as any)
-                        const error: ErrorsField<TOperation["variables"]> = _toPairs(response).reduce((a, e) => {
-                            if (e[1].errors) {
-                                a[e[0]] = e[1].errors.filter(i => i).map(j => j!).reduce((b, f) => {
-                                    if (f.field in b) {
-                                        b[f.field].push(f.messages)
-                                    } else {
-                                        b[f.field] = [f.messages]
-                                    }
-                                    return b
-                                }, {} as any)
-                            } else {
-                                a[e[0]] = null
-                            }
-                            return a
-                        }, {} as any)
+                        // const error_list: ErrorListField<TOperation["variables"]> = _toPairs(response).reduce((a, e) => {
+                        //     if (e[1]?.errors) {
+                        //         a[e[0]] = e[1].errors
+                        //     }
+                        //     return a
+                        // }, {} as any)
+                        // const error: ErrorsField<TOperation["variables"]> = _toPairs(response).reduce((a, e) => {
+                        //     if (e[1]?.errors) {
+                        //         a[e[0]] = e[1].errors.filter(i => i).map(j => j!).reduce((b, f) => {
+                        //             if (f.field in b) {
+                        //                 b[f.field].push(f.messages)
+                        //             } else {
+                        //                 b[f.field] = [f.messages]
+                        //             }
+                        //             return b
+                        //         }, {} as any)
+                        //     } else {
+                        //         a[e[0]] = null
+                        //     }
+                        //     return a
+                        // }, {} as any)
 
                         let has_error = false
                         for (let form in response) {
                             const _f = response[form]
-                            if ((_f.errors != null) && (_f.errors.length > 0)) {
+                            if ((_f?.errors != null) && (_f.errors.length > 0)) {
                                 has_error = true
                             }
                         }
 
-                        this.setState({errorList: error_list, errors: error, hasError: has_error}, () => {
+                        this.setState({error: new ErrorHandler(response), hasError: has_error}, () => {
                             resolve(response)
                         })
                     },
@@ -141,24 +179,24 @@ class MutationForm_<TOperation extends MutationParameters> extends React.Compone
     }
     
     render = () => (
-        <Form<TOperation["variables"]> formData={this.props.formData}>{(data) => {
-                const {formRef, ...other_props} = data
-                return this.props.children({
-                    commit: () => {
-                        if (formRef.current && formRef.current.reportValidity()) {
-                            return this.commit(data.value, data.files)
-                        }
-                        return null
-                    },
-                    errorList: this.state.errorList,
-                    errors: this.state.errors,
-                    hasError: this.state.hasError,
-                    ...other_props
-                })
-          }}</Form>
+        <ReactRelayContext.Consumer>
+          {(context:RelayContext | null) => (
+              <Form<TOperation["variables"]> formData={this.props.formData}>{(data) => {
+                      const {formRef, ...other_props} = data
+                      return this.props.children({
+                          commit: () => {
+                              if (formRef.current && formRef.current.reportValidity()) {
+                                  return this.commit(context!.environment, data.value, data.files)
+                              }
+                              return null
+                          },
+                          error: this.state.error,
+                          hasError: this.state.hasError,
+                          ...other_props
+                      })
+              }}</Form>
+          )}</ReactRelayContext.Consumer>
     )
 }
-
-const MutationForm = withEnvironment(MutationForm_)
 
 export {MutationForm}

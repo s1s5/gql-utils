@@ -19,18 +19,18 @@ type Props<Input> = {
 
 type FilesInput<Input> = {
     [K in keyof Input]: {
-        [L in keyof Input[K]]: File[] | undefined
+        [L in keyof Input[K]]?: File[] | undefined
     }
 }
 
 type OnChangeField<Input> = {
     [K in keyof Input]: {
-        [L in keyof Input[K]]: (value: Input[K][L]) => unknown
+        [L in keyof Input[K]]-?: (value: Input[K][L]) => unknown
     }
 }
 type OnUploadField<Input> = {
     [K in keyof Input]: {
-        [L in keyof Input[K]]: (files: File []) => unknown
+        [L in keyof Input[K]]-?: (files: File []) => unknown
     }
 }
 
