@@ -81,6 +81,7 @@ type Props<TOperation extends MutationParameters> = {
         errorHandler: ErrorHandler<TOperation> | null
         error: ErrorsField<TOperation["response"]> | null
         hasError: boolean
+        commiting: boolean
     }) => React.ReactNode
 }
 
@@ -88,17 +89,20 @@ type State<TOperation extends MutationParameters> = {
     errorHandler: ErrorHandler<TOperation> | null
     error: ErrorsField<TOperation["response"]> | null
     hasError: boolean
+    commiting: boolean
 }
 
 
 function get_initial_state<TOperation extends MutationParameters>(props: Props<TOperation>) : State<TOperation> {
-    return {errorHandler: null, error: null, hasError: false}
+    return {errorHandler: null, error: null, hasError: false, commiting: false}
 }
 
 class MutationForm<TOperation extends MutationParameters> extends React.Component<Props<TOperation>, State<TOperation>> {
     state = get_initial_state(this.props)
 
     commit = (environment: IEnvironment, values: TOperation["variables"], files: Form<TOperation["variables"]>["state"]["files"]) => {
+        this.setState({commiting: true})
+
         const variables: any = _cloneDeep(values)
         const uploadables: UploadableMap = {}
         _toPairs(files).map((e) => {
@@ -178,7 +182,9 @@ class MutationForm<TOperation extends MutationParameters> extends React.Componen
                 }
             )
         })
-        return p
+        return p.finally(() => {
+            this.setState({commiting: false})
+        })
     }
     
     render = () => (
@@ -196,6 +202,7 @@ class MutationForm<TOperation extends MutationParameters> extends React.Componen
                           errorHandler: this.state.errorHandler,
                           error: this.state.error,
                           hasError: this.state.hasError,
+                          commiting: this.state.commiting,
                           ...other_props
                       })
               }}</Form>
