@@ -5,6 +5,7 @@ import _isEqual from 'lodash/isEqual'
 import _toPairs from 'lodash/toPairs'
 
 type Props<Input> = {
+    formId: string
     formData: Input
     children: (data: {
         formRef: React.RefObject<HTMLFormElement>
@@ -105,7 +106,7 @@ class Form<Input extends Object> extends React.Component<Props<Input>, State<Inp
     form_ref = React.createRef<HTMLFormElement>()
 
     render = () => (
-        <form ref={this.form_ref}>{
+        <form id={this.props.formId} ref={this.form_ref}>{
             this.props.children({
                 formRef: this.form_ref,
                 value: this.state.value,

@@ -67,6 +67,7 @@ class ErrorHandler<TOperation extends MutationParameters> {
 }
 
 type Props<TOperation extends MutationParameters> = {
+    formId: string
     formData: TOperation["variables"]
     mutation: GraphQLTaggedNode
     configs?: DeclarativeMutationConfig[],
@@ -195,7 +196,7 @@ class MutationForm<TOperation extends MutationParameters> extends React.Componen
     render = () => (
         <ReactRelayContext.Consumer>
           {(context:RelayContext | null) => (
-              <Form<TOperation["variables"]> formData={this.props.formData}>{(data) => {
+              <Form<TOperation["variables"]> formId={this.props.formId} formData={this.props.formData}>{(data) => {
                       const {formRef, ...other_props} = data
                       return this.props.children({
                           commit: () => {
