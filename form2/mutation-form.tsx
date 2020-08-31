@@ -173,7 +173,11 @@ class MutationForm<TOperation extends MutationParameters> extends React.Componen
                         }
 
                         this.setState({errorHandler: new ErrorHandler(response), error, hasError: has_error}, () => {
-                            resolve(response)
+                            if (has_error) {
+                                reject([Error("form validation failed")])
+                            } else {
+                                resolve(response)
+                            }
                         })
                     },
                     onError: (error: Error) => {
