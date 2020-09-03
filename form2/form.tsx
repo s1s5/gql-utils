@@ -14,6 +14,7 @@ type Props<Input> = {
         onChange: OnChangeField<Input>
         onUpload: OnUploadField<Input>
         editing: boolean
+        copyValue2InitialValue: () => void
     }) => React.ReactNode
     onChange?: (value: Input, files: FilesInput<Input>) => unknown
 }
@@ -114,6 +115,14 @@ class Form<Input extends Object> extends React.Component<Props<Input>, State<Inp
                 onChange: this.state.onChange,
                 onUpload: this.state.onUpload,
                 editing: this.state.editing,
+                copyValue2InitialValue: () => {
+                    this.setState({
+                        initialValue: _cloneDeep(this.state.value),
+                        editing: false,
+                        hasChangedValues: false,
+                        hasUploadables: false,
+                    })
+                }
             })
         }</form>
     )

@@ -103,7 +103,7 @@ function get_initial_state<TOperation extends MutationParameters>(props: Props<T
 class MutationForm<TOperation extends MutationParameters> extends React.Component<Props<TOperation>, State<TOperation>> {
     state = get_initial_state(this.props)
 
-    commit = (environment: IEnvironment, values: TOperation["variables"], files: Form<TOperation["variables"]>["state"]["files"]) => {
+    commit = (environment: IEnvironment, values: TOperation["variables"], files: Form<TOperation["variables"]>["state"]["files"], on_success: () => void) => {
         this.setState({commiting: true, otherError: null})
 
         const variables: any = _cloneDeep(values)
@@ -193,6 +193,7 @@ class MutationForm<TOperation extends MutationParameters> extends React.Componen
             this.setState({otherError: e})
         })
         return p.finally(() => {
+            on_success()
             this.setState({commiting: false})
         })
     }
@@ -201,11 +202,11 @@ class MutationForm<TOperation extends MutationParameters> extends React.Componen
         <ReactRelayContext.Consumer>
           {(context:RelayContext | null) => (
               <Form<TOperation["variables"]> formId={this.props.formId} formData={this.props.formData}>{(data) => {
-                      const {formRef, ...other_props} = data
+                      const {formRef, copyValue2InitialValue, ...other_props} = data
                       return this.props.children({
                           commit: () => {
                               if (formRef.current && formRef.current.reportValidity()) {
-                                  return this.commit(context!.environment, data.value, data.files)
+                                  return this.commit(context!.environment, data.value, data.files, copyValue2InitialValue)
                               }
                               return null
                           },
