@@ -10,7 +10,6 @@ import {ReactRelayContext, commitMutation} from 'react-relay'
 import {Form} from './form'
 
 
-
 type FormErrorMessages = ReadonlyArray<{
     readonly field: string;
     readonly messages: ReadonlyArray<string>;
@@ -69,6 +68,7 @@ class ErrorHandler<TOperation extends MutationParameters> {
 type Props<TOperation extends MutationParameters> = {
     formId: string
     formData: TOperation["variables"]
+    formProps?: Omit<React.HTMLProps<HTMLFormElement>, "id" | "ref">
     mutation: GraphQLTaggedNode
     configs?: DeclarativeMutationConfig[],
     updater?: SelectorStoreUpdater<TOperation['response']> | null;
@@ -201,7 +201,10 @@ class MutationForm<TOperation extends MutationParameters> extends React.Componen
     render = () => (
         <ReactRelayContext.Consumer>
           {(context:RelayContext | null) => (
-              <Form<TOperation["variables"]> formId={this.props.formId} formData={this.props.formData}>{(data) => {
+              <Form<TOperation["variables"]>
+                formId={this.props.formId}
+                formData={this.props.formData}
+                formProps={this.props.formProps}>{(data) => {
                       const {formRef, copyValue2InitialValue, ...other_props} = data
                       return this.props.children({
                           commit: () => {

@@ -7,6 +7,7 @@ import _toPairs from 'lodash/toPairs'
 type Props<Input> = {
     formId: string
     formData: Input
+    formProps?: Omit<React.HTMLProps<HTMLFormElement>, "id" | "ref">
     children: (data: {
         formRef: React.RefObject<HTMLFormElement>
         value: Input
@@ -107,7 +108,7 @@ class Form<Input extends Object> extends React.Component<Props<Input>, State<Inp
     form_ref = React.createRef<HTMLFormElement>()
 
     render = () => (
-        <form id={this.props.formId} ref={this.form_ref}>{
+        <form id={this.props.formId} ref={this.form_ref} {...this.props.formProps}>{
             this.props.children({
                 formRef: this.form_ref,
                 value: this.state.value,
