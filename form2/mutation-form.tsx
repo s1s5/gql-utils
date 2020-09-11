@@ -171,10 +171,9 @@ class MutationForm<TOperation extends MutationParameters> extends React.Componen
                                 has_error = true
                             }
                         }
-
                         this.setState({errorHandler: new ErrorHandler(response), error, hasError: has_error}, () => {
                             if (has_error) {
-                                reject([Error("form validation failed")])
+                                reject(null)  // フォームの検証失敗
                             } else {
                                 resolve(response)
                             }
@@ -188,9 +187,10 @@ class MutationForm<TOperation extends MutationParameters> extends React.Componen
                     configs: this.props.configs,
                 }
             )
-        })
-        p.catch(e => {
-            this.setState({otherError: e})
+        }).catch(e => {
+            if (e != null) {
+                this.setState({otherError: e})
+            }
         })
         return p.finally(() => {
             on_success()
