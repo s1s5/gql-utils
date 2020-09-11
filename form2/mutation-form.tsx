@@ -19,6 +19,7 @@ type FormErrorMessages = ReadonlyArray<{
 export interface MutationParameters {
     readonly response: {[T in string]: {
         readonly errors: FormErrorMessages | null
+        readonly formIsValid: boolean
     } | null}
     readonly variables: {};
     readonly rawResponse?: {};
@@ -81,7 +82,6 @@ type Props<TOperation extends MutationParameters> = {
         editing: boolean
         errorHandler: ErrorHandler<TOperation> | null
         error: ErrorsField<TOperation["response"]> | null
-        otherError: Error[] | null
         hasError: boolean
         commiting: boolean
     }) => React.ReactNode
@@ -90,21 +90,20 @@ type Props<TOperation extends MutationParameters> = {
 type State<TOperation extends MutationParameters> = {
     errorHandler: ErrorHandler<TOperation> | null
     error: ErrorsField<TOperation["response"]> | null
-    otherError: Error[] | null
     hasError: boolean
     commiting: boolean
 }
 
 
 function get_initial_state<TOperation extends MutationParameters>(props: Props<TOperation>) : State<TOperation> {
-    return {errorHandler: null, error: null, otherError: null, hasError: false, commiting: false}
+    return {errorHandler: null, error: null, hasError: false, commiting: false}
 }
 
 class MutationForm<TOperation extends MutationParameters> extends React.Component<Props<TOperation>, State<TOperation>> {
     state = get_initial_state(this.props)
 
     commit = (environment: IEnvironment, values: TOperation["variables"], files: Form<TOperation["variables"]>["state"]["files"], on_success: () => void) => {
-        this.setState({commiting: true, otherError: null})
+        this.setState({commiting: true})
 
         const variables: any = _cloneDeep(values)
         const uploadables: UploadableMap = {}
@@ -137,7 +136,7 @@ class MutationForm<TOperation extends MutationParameters> extends React.Componen
                         }
 
                         if (response === null) {
-                            reject([Error("未知のエラーです")])
+                            reject([Error("サーバーエラー")])
                             return 
                         }
 
@@ -164,19 +163,8 @@ class MutationForm<TOperation extends MutationParameters> extends React.Componen
                             return a
                         }, {} as any)
 
-                        let has_error = false
-                        for (let form in response) {
-                            const _f = response[form]
-                            if ((_f?.errors != null) && (_f.errors.length > 0)) {
-                                has_error = true
-                            }
-                        }
-                        this.setState({errorHandler: new ErrorHandler(response), error, hasError: has_error}, () => {
-                            if (has_error) {
-                                reject(null)  // フォームの検証失敗
-                            } else {
-                                resolve(response)
-                            }
+                        this.setState({errorHandler: new ErrorHandler(response), error, hasError: !response.formIsValid}, () => {
+                            resolve(response)
                         })
                     },
                     onError: (error: Error) => {
@@ -187,10 +175,6 @@ class MutationForm<TOperation extends MutationParameters> extends React.Componen
                     configs: this.props.configs,
                 }
             )
-        }).catch(e => {
-            if (e != null) {
-                this.setState({otherError: e})
-            }
         })
         return p.finally(() => {
             on_success()
@@ -216,7 +200,6 @@ class MutationForm<TOperation extends MutationParameters> extends React.Componen
                           errorHandler: this.state.errorHandler,
                           error: this.state.error,
                           hasError: this.state.hasError,
-                          otherError: this.state.otherError,
                           commiting: this.state.commiting,
                           ...other_props
                       })
