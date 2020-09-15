@@ -13,7 +13,7 @@ import {
 import {getId, _globals} from './environment-provider'
 
 interface SubscriptionParameters {
-    readonly response: OperationType;
+    readonly response: {};
     readonly variables: {};
 }
 
@@ -22,7 +22,7 @@ type Param<TSubscriptionPayload extends SubscriptionParameters> = {
     subscription: GraphQLTaggedNode,
     observer?: Observer<TSubscriptionPayload["response"]>,
     updater?: SelectorStoreUpdater<TSubscriptionPayload["response"]>,
-    variables?: TSubscriptionPayload["variables"],
+    variables: TSubscriptionPayload["variables"],
     environment: IEnvironment,
 }
 
@@ -50,7 +50,7 @@ const useSubscription = <TSubscriptionPayload extends SubscriptionParameters>(pa
 
         const subscription_config : GraphQLSubscriptionConfig<TSubscriptionPayload> = {
             subscription: param.subscription,
-            variables: param.variables == null ? {} : param.variables,
+            variables: param.variables,
             updater: param.updater,
             onNext: observer.next,
             onError: observer.error,
