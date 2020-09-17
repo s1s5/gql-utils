@@ -67,8 +67,8 @@ const useSubscription = <TSubscriptionPayload extends SubscriptionParameters>(pa
 
         return () => {
             param.observer && param.observer.unsubscribe && param.observer.unsubscribe(subsc)
-            dispose()
-            unsubscribe()
+            dispose && dispose()
+            unsubscribe && unsubscribe()
         }
     }, deps)
 
