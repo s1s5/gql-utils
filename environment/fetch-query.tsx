@@ -125,7 +125,7 @@ const fetchQuery = async (url: string, request: RequestParameters,
         }
 
         if (!data.data) {
-            if (data.errors.length == 0) {
+            if (data.errors == null || data.errors?.length == 0) {
                 throw Error("Unknown Error occurred")
             }
             throw data.errors[0]
