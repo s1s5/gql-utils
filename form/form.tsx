@@ -49,7 +49,8 @@ type State<Input> = {
 
 function on_field_change<Input extends Object>(target: Form<Input>, key0: string, diff_state: Record<string, any>) {
     const form: any = _cloneDeep(target.state.value)
-    form[key0] = _merge(form[key0], diff_state)
+    Object.assign(form[key0], diff_state)
+    // form[key0] = _merge(form[key0], diff_state)
     const has_changed = !_isEqual(form, target.state.initialValue)
     target.setState({value: form, editing: has_changed || target.state.hasUploadables, hasChangedValues: has_changed}, () => {
         target.props.onChange && target.props.onChange(target.state.value, target.state.files)
