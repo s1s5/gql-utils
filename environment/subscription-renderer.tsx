@@ -23,4 +23,5 @@ const SubscriptionRenderer = <TSubscriptionPayload extends SubscriptionParameter
     return (props.children ? <>{ props.children(value) }</> : null)
 }
 
+export {SubscriptionRenderer as SubscriptionRendererRaw}
 export default withEnvironment(SubscriptionRenderer)
