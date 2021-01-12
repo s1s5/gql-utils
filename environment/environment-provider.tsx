@@ -21,6 +21,7 @@ type Props = {
     wsUrl?: string,
     children: React.ReactNode,
     getRequestInit?: () => Omit<RequestInit, "body">,
+    onSubscriptionClientError?: (error: any) => void
 }
 
 let _global_counter = 0
@@ -51,6 +52,7 @@ const EnvironmentProvider = (props: Props) => {
             })
             c.on('error', (error: any) => {
                 console.error("client error", error)
+                props.onSubscriptionClientError && props.onSubscriptionClientError(error)
             })
             setClient(c)
 
