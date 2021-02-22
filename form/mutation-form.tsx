@@ -146,8 +146,11 @@ class MutationForm<TOperation extends MutationParameters> extends React.Componen
                         //     }
                         //     return a
                         // }, {} as any)
-
+                        let form_is_valid = false
                         const error: ErrorsField<TOperation["variables"]> = _toPairs(response).reduce((a, e) => {
+                            if (e[1]?.formIsValid == true) {
+                                form_is_valid = true
+                            }
                             if (e[1]?.errors) {
                                 a[e[0]] = e[1].errors.filter(i => i).map(j => j!).reduce((b, f) => {
                                     if (f.field in b) {
@@ -163,7 +166,7 @@ class MutationForm<TOperation extends MutationParameters> extends React.Componen
                             return a
                         }, {} as any)
 
-                        this.setState({errorHandler: new ErrorHandler(response), error, hasError: !response.formIsValid}, () => {
+                        this.setState({errorHandler: new ErrorHandler(response), error, hasError: !form_is_valid}, () => {
                             resolve(response)
                         })
                     },
@@ -177,7 +180,9 @@ class MutationForm<TOperation extends MutationParameters> extends React.Componen
             )
         })
         return p.finally(() => {
-            on_success()
+            if (!this.state.hasError) {
+                on_success()
+            }
             this.setState({commiting: false})
         })
     }
