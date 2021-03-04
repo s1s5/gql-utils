@@ -182,7 +182,7 @@ function createListFC<TOperation extends OperationType, N extends NodeType>(
 
 
         let onError_ = onError ? onError : (default_renderer_props ? default_renderer_props.onError : undefined)
-        let onLoading_ = onLoading ? onLoading : (default_renderer_props ? default_renderer_props.onLoading : undefined)
+        let onLoading_ = onLoading !== undefined ? onLoading : (default_renderer_props ? default_renderer_props.onLoading : undefined)
         
         return (
             <QueryRenderer_<TOperation>

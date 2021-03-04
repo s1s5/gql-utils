@@ -64,7 +64,7 @@ export function createDetailFC<TOperation extends OperationType>(
     return <T extends React.ReactNode>(props: QRProps<TOperation> & {children: (data: TOperation["response"][typeof query_key], retry: (() => void) | null | undefined) => T} & RendererProps) => {
         const {environment, children, onError, onLoading, ...other_props} = props
         let onError_ = onError ? onError : (default_renderer_props ? default_renderer_props.onError : undefined)
-        let onLoading_ = onLoading ? onLoading : (default_renderer_props ? default_renderer_props.onLoading : undefined)
+        let onLoading_ = onLoading !== undefined ? onLoading : (default_renderer_props ? default_renderer_props.onLoading : undefined)
 
         const context = React.useContext(ReactRelayContext)
         let e = environment ? environment : context!.environment
@@ -89,7 +89,7 @@ export function createDetailFC<TOperation extends OperationType>(
                       } else if (props) {
                           return children(props[query_key], retry)
                       }
-                      return onLoading_ ? onLoading_ : "読み込み中"
+                      return onLoading_ !== undefined ? onLoading_ : "読み込み中"
               } }
               { ...other_props}
               />
