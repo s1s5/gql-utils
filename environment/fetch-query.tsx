@@ -164,7 +164,7 @@ const cacheHandler = async (
 
     if (isMutation(request)) {
         queryResponseCache.clear();
-        return fetchQuery(url, request, variables, uploadables, getRequestInit, 20000, []);
+        return fetchQuery(url, request, variables, uploadables, getRequestInit, 90000, []);
     }
     
     const fromCache = queryResponseCache.get(queryID, variables);
@@ -172,7 +172,7 @@ const cacheHandler = async (
         return fromCache;
     }
     
-    const fromServer = await fetchQuery(url, request, variables, uploadables, getRequestInit, 20000, [1000, 3000, 5000]);
+    const fromServer = await fetchQuery(url, request, variables, uploadables, getRequestInit, 90000, [10000, 20000, 50000]);
     if (fromServer) {
         queryResponseCache.set(queryID, variables, fromServer);
     }
