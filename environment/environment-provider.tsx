@@ -42,7 +42,9 @@ const EnvironmentProvider = (props: Props) => {
             variables: Variables,
             cacheConfig: CacheConfig,
             uploadables?: UploadableMap | null) => {
-                if (props.connectionHook) { props.connectionHook() }
+                if (props.connectionHook) {
+                    try {props.connectionHook()} catch {}
+                }
                 return fetchQuery(
                     props.postUrl, request, variables, cacheConfig, uploadables,
                     props.getRequestInit)
@@ -67,7 +69,7 @@ const EnvironmentProvider = (props: Props) => {
                  cacheConfig: CacheConfig) => {
                      const query = request.text!
                      const observable = c.request({query, variables})
-                     if (props.connectionHook) { props.connectionHook() }
+                     if (props.connectionHook) { try {props.connectionHook()} catch {} }
                      return {
                          subscribe: (observer: any) => {
                              const {unsubscribe} = observable.subscribe(observer)
