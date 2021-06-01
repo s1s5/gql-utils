@@ -21,6 +21,7 @@ type Props = {
     wsUrl?: string,
     children: React.ReactNode,
     getRequestInit?: () => Omit<RequestInit, "body">,
+    connectionHook?: () => void
     onSubscriptionClientError?: (error: any) => void
 }
 
@@ -40,9 +41,12 @@ const EnvironmentProvider = (props: Props) => {
             request: RequestParameters,
             variables: Variables,
             cacheConfig: CacheConfig,
-            uploadables?: UploadableMap | null) => fetchQuery(
-                props.postUrl, request, variables, cacheConfig, uploadables,
-                props.getRequestInit)
+            uploadables?: UploadableMap | null) => {
+                if (props.connectionHook) { props.connectionHook() }
+                return fetchQuery(
+                    props.postUrl, request, variables, cacheConfig, uploadables,
+                    props.getRequestInit)
+            }
 
         let network
         if (props.wsUrl) {
@@ -63,6 +67,7 @@ const EnvironmentProvider = (props: Props) => {
                  cacheConfig: CacheConfig) => {
                      const query = request.text!
                      const observable = c.request({query, variables})
+                     if (props.connectionHook) { props.connectionHook() }
                      return {
                          subscribe: (observer: any) => {
                              const {unsubscribe} = observable.subscribe(observer)
