@@ -2,15 +2,15 @@ import React from 'react'
 import {
     IEnvironment,
     GraphQLTaggedNode,
-    Subscription,
+    // Subscription,
     Observer,
     SelectorStoreUpdater,
     GraphQLSubscriptionConfig,
     requestSubscription,
-    OperationType,
+    // OperationType,
 } from 'relay-runtime'
 
-import {getId, _globals, set_global_observer} from './environment-provider'
+// import {getId, _globals} from './environment-provider'
 
 interface SubscriptionParameters {
     readonly response: {};
@@ -20,7 +20,7 @@ interface SubscriptionParameters {
 
 type Param<TSubscriptionPayload extends SubscriptionParameters> = {
     subscription: GraphQLTaggedNode,
-    observer?: Observer<TSubscriptionPayload["response"]>,
+    observer?: Omit<Observer<TSubscriptionPayload["response"]>, "start" | "unsubscribe">,
     updater?: SelectorStoreUpdater<TSubscriptionPayload["response"]>,
     variables: TSubscriptionPayload["variables"],
     environment: IEnvironment,
@@ -45,10 +45,10 @@ const useSubscription = <TSubscriptionPayload extends SubscriptionParameters>(pa
             },
             error: (error: Error) => (param.observer && param.observer.error && param.observer.error(error)),
             complete: () => (param.observer && param.observer.complete && param.observer.complete()),
-            unsubscribe: (subscription: Subscription) => { param.observer && param.observer.unsubscribe && param.observer.unsubscribe(subscription) },
+            // unsubscribe: (subscription: Subscription) => { param.observer && param.observer.unsubscribe && param.observer.unsubscribe(subscription) },
         }
 
-        const current_counter = getId()
+        // const current_counter = getId()
 
         const subscription_config : GraphQLSubscriptionConfig<TSubscriptionPayload> = {
             subscription: param.subscription,
@@ -59,27 +59,23 @@ const useSubscription = <TSubscriptionPayload extends SubscriptionParameters>(pa
             onCompleted: observer.complete,
         }
 
-        // console.log("@use-subscription, config=>", subscription_config)
-        set_global_observer(observer)
-        // const {dispose} = requestSubscription(param.environment, subscription_config)
-        const all = requestSubscription(param.environment, subscription_config)
-        set_global_observer(undefined)
-        // console.log("requestSubscription", all)
-        const {dispose} = all
-        const subsc = {unsubscribe: dispose, closed: false}
-        param.observer && param.observer.start && param.observer.start(subsc)
+        const {dispose} = requestSubscription(param.environment, subscription_config)
+        return dispose
 
-        const unsubscribe = _globals[current_counter]
-        delete _globals[current_counter]
-
-        return () => {
-            param.observer && param.observer.unsubscribe && param.observer.unsubscribe(subsc)
-            dispose && dispose()
-            unsubscribe && unsubscribe()
-        }
+        // const subsc = {unsubscribe: dispose, closed: false}
+        // param.observer && param.observer.start && param.observer.start(subsc)
+        // 
+        // // const unsubscribe = _globals[current_counter]
+        // delete _globals[current_counter]
+        // 
+        // return () => {
+        //     param.observer && param.observer.unsubscribe && param.observer.unsubscribe(subsc)
+        //     dispose && dispose()
+        //     // unsubscribe && unsubscribe()
+        // }
     }, deps)
 
-    return (value as any)?.data  //  TODO
+    return value
 }
 
 export {Param, SubscriptionParameters}
