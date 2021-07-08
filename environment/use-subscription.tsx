@@ -10,7 +10,7 @@ import {
     OperationType,
 } from 'relay-runtime'
 
-import {getId, _globals} from './environment-provider'
+import {getId, _globals, set_global_observer} from './environment-provider'
 
 interface SubscriptionParameters {
     readonly response: {};
@@ -31,6 +31,7 @@ const useSubscription = <TSubscriptionPayload extends SubscriptionParameters>(pa
     React.useEffect(() => {
         const observer = {
             next: (value: any) => {
+                // console.log('next called@use-subscription', value)
                 if (value.errors !== undefined && value.errors !== null && value.errors.length > 0) {
                     if (param.observer && param.observer.error) {
                         param.observer.error(value.errors)
@@ -39,6 +40,7 @@ const useSubscription = <TSubscriptionPayload extends SubscriptionParameters>(pa
                     }
                 }
                 set_value(value as TSubscriptionPayload["response"])
+                // console.log('next called@use-subscription param=', param)
                 param.observer && param.observer.next && param.observer.next(value)
             },
             error: (error: Error) => (param.observer && param.observer.error && param.observer.error(error)),
@@ -57,8 +59,13 @@ const useSubscription = <TSubscriptionPayload extends SubscriptionParameters>(pa
             onCompleted: observer.complete,
         }
 
-        const {dispose} = requestSubscription(param.environment, subscription_config)
-
+        // console.log("@use-subscription, config=>", subscription_config)
+        set_global_observer(observer)
+        // const {dispose} = requestSubscription(param.environment, subscription_config)
+        const all = requestSubscription(param.environment, subscription_config)
+        set_global_observer(undefined)
+        // console.log("requestSubscription", all)
+        const {dispose} = all
         const subsc = {unsubscribe: dispose, closed: false}
         param.observer && param.observer.start && param.observer.start(subsc)
 
@@ -72,7 +79,7 @@ const useSubscription = <TSubscriptionPayload extends SubscriptionParameters>(pa
         }
     }, deps)
 
-    return value
+    return (value as any)?.data  //  TODO
 }
 
 export {Param, SubscriptionParameters}

@@ -2,7 +2,7 @@ import React from 'react'
 import _clone from 'lodash/clone'
 
 import {RendererProps} from './detail'
-import {NodeType, ListType} from './types.d'
+import {NodeType, ListType} from './'
 
 import {
     IEnvironment,
@@ -16,8 +16,9 @@ import {
     QueryRenderer as QueryRenderer_,
     FetchPolicy,
     RelayRefetchProp,
-    RefetchOptions,
+//     RefetchOptions,
 } from 'react-relay'
+import {RefetchOptions} from 'react-relay/ReactRelayTypes'
 
 
 type QRProps<TOperation extends OperationType> = {

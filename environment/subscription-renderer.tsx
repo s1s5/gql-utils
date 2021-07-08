@@ -19,7 +19,7 @@ const SubscriptionRenderer = <TSubscriptionPayload extends SubscriptionParameter
         variables: props.variables,
         environment: props.environment
     }, [props.subscription, props.observer, props.updater, props.variables, props.environment])
-
+    // console.log(value, props)
     return (props.children ? <>{ props.children(value) }</> : null)
 }
 
