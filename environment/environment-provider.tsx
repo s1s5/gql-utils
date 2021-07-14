@@ -36,7 +36,7 @@ const getId = () => {
 }
 
 const set_ws_connection_status = createEvent<string | null>('set_ws_connection_status')
-const ws_connection_status_store = createStore<string | null>(null)
+const ws_connection_status_store = createStore<string | null>("")
     .on(set_ws_connection_status, (_, value) => value)
 
 
