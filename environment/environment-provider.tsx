@@ -1,4 +1,5 @@
 import React from 'react'
+import {createStore, createEvent} from 'effector'
 
 import {
     Environment,
@@ -34,6 +35,11 @@ const getId = () => {
     return _global_counter
 }
 
+const set_ws_connection_status = createEvent<string | null>('set_ws_connection_status')
+const ws_connection_status_store = createStore<string | null>(null)
+    .on(set_ws_connection_status, (_, value) => value)
+
+
 const EnvironmentProvider = (props: Props) => {
     const [client, setClient] = React.useState<SubscriptionClient | null>()
     const [environment, setEnvironment] = React.useState<Environment>()
@@ -59,10 +65,31 @@ const EnvironmentProvider = (props: Props) => {
                 reconnect: true,
             })
 
-            c.on('error', (error: any) => {
-                console.error("client error", error)
-                props.onSubscriptionClientError && props.onSubscriptionClientError(error)
+            c.on('connected', (key) => {
+                set_ws_connection_status(key || null)
+                // console.log("connected:", arg)
             })
+            c.on('reconnected', (key) => {
+                set_ws_connection_status(key || null)
+                // console.log("connected:", arg)
+            })
+            c.on('disconnected', () => {
+                set_ws_connection_status(null)
+                // console.log("disconnected:", arg)
+            })
+            c.on('error', (error: any) => {
+                set_ws_connection_status(null)
+                // console.error("client error", error)
+                // props.onSubscriptionClientError && props.onSubscriptionClientError(error)
+            })
+
+            c.onConnected((...args) => {console.log("onConnected", args)}, {some: 'data'})
+            c.onConnecting((...args) => {console.log("onConnecting", args)}, {some: 'data'})
+            c.onDisconnected((...args) => {console.log("onDisconnected", args)}, {some: 'data'})
+            c.onReconnected((...args) => {console.log("onReconnected", args)}, {some: 'data'})
+            c.onReconnecting((...args) => {console.log("onReconnecting", args)}, {some: 'data'})
+            c.onError((...args) => {console.log("onError", args)}, {some: 'data'})
+
             setClient(c)
 
             network = Network.create(
@@ -110,6 +137,6 @@ const EnvironmentProvider = (props: Props) => {
     )
 }
 
-export {getId, _globals}
+export {getId, _globals, ws_connection_status_store}
 export default EnvironmentProvider;
 

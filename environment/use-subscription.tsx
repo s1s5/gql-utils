@@ -1,4 +1,5 @@
 import React from 'react'
+import {useStore} from 'effector-react'
 import {
     IEnvironment,
     GraphQLTaggedNode,
@@ -11,6 +12,7 @@ import {
 } from 'relay-runtime'
 
 // import {getId, _globals} from './environment-provider'
+import {ws_connection_status_store} from './environment-provider'
 
 interface SubscriptionParameters {
     readonly response: {};
@@ -28,6 +30,9 @@ type Param<TSubscriptionPayload extends SubscriptionParameters> = {
 
 const useSubscription = <TSubscriptionPayload extends SubscriptionParameters>(param: Param<TSubscriptionPayload>, deps: any[]) => {    
     let [value, set_value] = React.useState<TSubscriptionPayload["response"]>()
+    const ws_connection_status = useStore(ws_connection_status_store)
+    // console.log("ws_connection_status -> ", ws_connection_status)
+
     React.useEffect(() => {
         const observer = {
             next: (value: any) => {
@@ -73,7 +78,7 @@ const useSubscription = <TSubscriptionPayload extends SubscriptionParameters>(pa
         //     dispose && dispose()
         //     // unsubscribe && unsubscribe()
         // }
-    }, deps)
+    }, [ws_connection_status, ...deps])
 
     return value
 }
