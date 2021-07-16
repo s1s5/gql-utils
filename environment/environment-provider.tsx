@@ -83,12 +83,12 @@ const EnvironmentProvider = (props: Props) => {
                 // props.onSubscriptionClientError && props.onSubscriptionClientError(error)
             })
 
-            c.onConnected((...args) => {console.log("onConnected", args)}, {some: 'data'})
-            c.onConnecting((...args) => {console.log("onConnecting", args)}, {some: 'data'})
-            c.onDisconnected((...args) => {console.log("onDisconnected", args)}, {some: 'data'})
-            c.onReconnected((...args) => {console.log("onReconnected", args)}, {some: 'data'})
-            c.onReconnecting((...args) => {console.log("onReconnecting", args)}, {some: 'data'})
-            c.onError((...args) => {console.log("onError", args)}, {some: 'data'})
+            // c.onConnected((...args) => {console.log("onConnected", args)}, {some: 'data'})
+            // c.onConnecting((...args) => {console.log("onConnecting", args)}, {some: 'data'})
+            // c.onDisconnected((...args) => {console.log("onDisconnected", args)}, {some: 'data'})
+            // c.onReconnected((...args) => {console.log("onReconnected", args)}, {some: 'data'})
+            // c.onReconnecting((...args) => {console.log("onReconnecting", args)}, {some: 'data'})
+            // c.onError((...args) => {console.log("onError", args)}, {some: 'data'})
 
             setClient(c)
 
